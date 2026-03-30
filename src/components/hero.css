@@ -1,0 +1,66 @@
+.hero-container {
+  display: flex;
+  flex-direction: row; /* Forces text and image to be side-by-side */
+  justify-content: space-between;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0 10%;
+  background-color: #f4f4f4; /* Light grey like the template */
+}
+
+.hero-content {
+  flex: 1;
+  max-width: 500px;
+}
+
+.hero-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end; /* Pushes image to the right */
+}
+
+.subtitle {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 14px;
+  color: #888;
+}
+
+.hero-title {
+  font-size: 5rem; /* Large and bold */
+  font-weight: 800;
+  margin: 10px 0;
+  line-height: 1.1;
+}
+
+.hero-description {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.read-more-btn {
+  background-color: #a69080; /* The tan color from your screenshot */
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.read-more-btn:hover {
+  background-color: #8e7a6d;
+}
+
+.hero-image {
+  width: 110%; /* Makes it slightly larger to overflow elegantly */
+  max-width: 800px;
+  /* To get the 'floating' look from the template, use a PNG with no background */
+}
+
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+  }
+}
