@@ -1,47 +1,48 @@
-import { useParams } from "react-router-dom";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import products from "../data/products";
 import { useCart } from "../context/CartContext";
 
 export default function ProductPage() {
-  // Zone 2 — read the :id from the URL
   const { id } = useParams();
   const navigate = useNavigate();
-const { addToCart } = useCart();
+  const { addToCart } = useCart();
 
-  // Find the product whose id matches the URL
-  // useParams always gives you a string, so we convert it to a number with Number()
   const product = products.find(p => p.id === Number(id));
   const [quantity, setQuantity] = useState(1);
   const [addedMsg, setAddedMsg] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1000);
 
-  // Guard clause — if someone types a bad URL like /product/999
+  // Responsiveness Listener
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1000);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (!product) {
     return (
       <div style={{ padding: "80px 6%", textAlign: "center", fontFamily: "sans-serif" }}>
         <h2>Product not found</h2>
         <button
           onClick={() => navigate("/shop")}
-          style={{ marginTop: "20px", padding: "12px 32px", backgroundColor: "#8b7355",
-            color: "white", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>
+          style={{ marginTop: "20px", padding: "12px 32px", backgroundColor: "#8b7355", color: "white", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>
           Back to Shop
         </button>
       </div>
     );
   }
 
-  // Related products — same category, exclude current product, max 3
   const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
 
   const handleAddToBasket = () => {
-  addToCart(product, quantity); // 👈 this line is new
-  setAddedMsg(true);
-  setTimeout(() => setAddedMsg(false), 2000);
-};
+    addToCart(product, quantity);
+    setAddedMsg(true);
+    setTimeout(() => setAddedMsg(false), 2000);
+  };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1", fontFamily: "'Georgia', serif" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1", fontFamily: "'Georgia', serif", position: "relative" }}>
 
       {/* Breadcrumb */}
       <div style={{ padding: "16px 6%", fontSize: "0.8rem", fontFamily: "sans-serif", color: "#7a6e68" }}>
@@ -52,34 +53,44 @@ const { addToCart } = useCart();
         <span style={{ color: "#1a1a1a" }}>{product.name}</span>
       </div>
 
-      {/* Main product section */}
-      <div style={{ display: "flex", gap: "60px", padding: "20px 6% 60px", alignItems: "flex-start" }}>
+      {/* Main product section - Stacked on Mobile */}
+      <div style={{ 
+        display: "flex", 
+        flexDirection: isMobile ? "column" : "row", 
+        gap: isMobile ? "30px" : "60px", 
+        padding: isMobile ? "10px 6% 40px" : "20px 6% 60px", 
+        alignItems: "flex-start" 
+      }}>
 
         {/* LEFT — Image */}
-        <div style={{ flex: "0 0 52%", backgroundColor: "white", overflow: "hidden" }}>
+        <div style={{ 
+          flex: isMobile ? "1" : "0 0 52%", 
+          width: isMobile ? "100%" : "auto",
+          backgroundColor: "white", 
+          overflow: "hidden" 
+        }}>
           <img
             src={product.image}
             alt={product.name}
-            style={{ width: "100%", height: "500px", objectFit: "cover", display: "block" }}
+            style={{ 
+              width: "100%", 
+              height: isMobile ? "350px" : "500px", 
+              objectFit: "cover", 
+              display: "block" 
+            }}
           />
         </div>
 
         {/* RIGHT — Details */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
-
-          {/* Category */}
-          <span style={{ fontSize: "0.75rem", color: "#8b7355", letterSpacing: "1.5px",
-            textTransform: "uppercase", fontFamily: "sans-serif" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px", width: isMobile ? "100%" : "auto" }}>
+          <span style={{ fontSize: "0.75rem", color: "#8b7355", letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "sans-serif" }}>
             {product.category}
           </span>
 
-          {/* Name */}
-          <h1 style={{ margin: 0, fontSize: "1.9rem", fontWeight: "900",
-            color: "#1a1a1a", lineHeight: 1.2, letterSpacing: "-0.5px" }}>
+          <h1 style={{ margin: 0, fontSize: isMobile ? "1.6rem" : "1.9rem", fontWeight: "900", color: "#1a1a1a", lineHeight: 1.2, letterSpacing: "-0.5px" }}>
             {product.name}
           </h1>
 
-          {/* Rating */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ color: "#c8a43a", fontSize: "1rem" }}>
               {"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}
@@ -89,112 +100,92 @@ const { addToCart } = useCart();
             </span>
           </div>
 
-          {/* Price */}
           <div style={{ display: "flex", alignItems: "center", gap: "14px", paddingTop: "4px" }}>
             <span style={{ fontSize: "1.6rem", fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif" }}>
               ${product.price}
             </span>
             {product.originalPrice && (
-              <span style={{ fontSize: "1.1rem", color: "#aaa",
-                textDecoration: "line-through", fontFamily: "sans-serif" }}>
+              <span style={{ fontSize: "1.1rem", color: "#aaa", textDecoration: "line-through", fontFamily: "sans-serif" }}>
                 ${product.originalPrice}
               </span>
             )}
-            {product.originalPrice && (
-              <span style={{ backgroundColor: "#8b0000", color: "white",
-                padding: "3px 10px", fontSize: "0.75rem", fontWeight: "700" }}>
-                Save ${product.originalPrice - product.price}
-              </span>
-            )}
           </div>
 
-          {/* Divider */}
           <div style={{ borderTop: "1px solid #d4cfc9", paddingTop: "16px" }}>
-
-            {/* Quantity selector */}
-            <p style={{ margin: "0 0 10px", fontSize: "0.85rem",
-              fontWeight: "600", fontFamily: "sans-serif", color: "#1a1a1a" }}>
+            <p style={{ margin: "0 0 10px", fontSize: "0.85rem", fontWeight: "600", fontFamily: "sans-serif", color: "#1a1a1a" }}>
               Quantity
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "0",
-              border: "1.5px solid #c8c2bb", width: "fit-content" }}>
-              <button
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                style={{ width: "40px", height: "40px", background: "none",
-                  border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#1a1a1a" }}>
-                −
-              </button>
-              <span style={{ width: "40px", textAlign: "center",
-                fontFamily: "sans-serif", fontSize: "0.9rem" }}>
-                {quantity}
-              </span>
-              <button
-                onClick={() => setQuantity(q => q + 1)}
-                style={{ width: "40px", height: "40px", background: "none",
-                  border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#1a1a1a" }}>
-                +
-              </button>
+            <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #c8c2bb", width: "fit-content" }}>
+              <button onClick={() => setQuantity(q => Math.max(1, q - 1))} style={{ width: "40px", height: "40px", background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer" }}>−</button>
+              <span style={{ width: "40px", textAlign: "center", fontFamily: "sans-serif" }}>{quantity}</span>
+              <button onClick={() => setQuantity(q => q + 1)} style={{ width: "40px", height: "40px", background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer" }}>+</button>
             </div>
           </div>
 
-          {/* Add to basket */}
           <button
             onClick={handleAddToBasket}
-            style={{ padding: "15px", backgroundColor: "#8b7355", color: "white",
-              border: "none", fontSize: "0.95rem", fontWeight: "600",
-              letterSpacing: "1px", cursor: "pointer", marginTop: "8px",
-              fontFamily: "sans-serif", transition: "background-color 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6b5a50"}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8b7355"}
+            style={{ padding: "15px", backgroundColor: "#8b7355", color: "white", border: "none", fontSize: "0.95rem", fontWeight: "600", letterSpacing: "1px", cursor: "pointer", marginTop: "8px", fontFamily: "sans-serif" }}
           >
             {addedMsg ? "✓ Added to Basket!" : `Add ${quantity} to Basket — $${product.price * quantity}`}
           </button>
 
-          {/* Trust badges */}
-          <div style={{ display: "flex", gap: "20px", paddingTop: "8px",
-            borderTop: "1px solid #d4cfc9", flexWrap: "wrap" }}>
-            {["🚚 Free Delivery over $199", "↩️ Free 30-day Returns", "🔒 Secure Checkout"].map(b => (
-              <span key={b} style={{ fontSize: "0.78rem", color: "#7a6e68", fontFamily: "sans-serif" }}>{b}</span>
+          <div style={{ display: "flex", gap: "15px", paddingTop: "8px", borderTop: "1px solid #d4cfc9", flexWrap: "wrap" }}>
+            {["🚚 Free Delivery", "↩️ Free Returns", "🔒 Secure Checkout"].map(b => (
+              <span key={b} style={{ fontSize: "0.72rem", color: "#7a6e68", fontFamily: "sans-serif" }}>{b}</span>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Related products */}
+      {/* Related products - 1 column on mobile */}
       {related.length > 0 && (
-        <div style={{ padding: "0 6% 60px" }}>
-          <h2 style={{ fontSize: "1.3rem", fontWeight: "900", marginBottom: "24px",
-            color: "#1a1a1a", letterSpacing: "-0.3px" }}>
+        <div style={{ padding: "0 6% 80px" }}>
+          <h2 style={{ fontSize: "1.3rem", fontWeight: "900", marginBottom: "24px", color: "#1a1a1a" }}>
             You might also like
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", 
+            gap: "24px" 
+          }}>
             {related.map(p => (
-              <div
-                key={p.id}
-                onClick={() => navigate(`/product/${p.id}`)}
-                style={{ backgroundColor: "white", cursor: "pointer",
-                  border: "1px solid #e8e4df", overflow: "hidden",
-                  transition: "box-shadow 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-              >
-                <img src={p.image} alt={p.name}
-                  style={{ width: "100%", height: "180px", objectFit: "cover", display: "block" }} />
+              <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} style={{ backgroundColor: "white", cursor: "pointer", border: "1px solid #e8e4df" }}>
+                <img src={p.image} alt={p.name} style={{ width: "100%", height: "180px", objectFit: "cover" }} />
                 <div style={{ padding: "14px" }}>
-                  <p style={{ margin: "0 0 4px", fontSize: "0.92rem",
-                    fontWeight: "700", color: "#1a1a1a", fontFamily: "'Georgia', serif" }}>
-                    {p.name}
-                  </p>
-                  <p style={{ margin: 0, fontSize: "0.9rem",
-                    color: "#8b7355", fontFamily: "sans-serif", fontWeight: "600" }}>
-                    ${p.price}
-                  </p>
+                  <p style={{ margin: "0 0 4px", fontSize: "0.92rem", fontWeight: "700", fontFamily: "'Georgia', serif" }}>{p.name}</p>
+                  <p style={{ margin: 0, fontSize: "0.9rem", color: "#8b7355", fontWeight: "600" }}>${p.price}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* --- FLOATING BASKET ICON --- */}
+      <button 
+        onClick={() => navigate("/cart")}
+        style={{
+          position: "fixed",
+          bottom: isMobile ? "20px" : "30px",
+          right: isMobile ? "20px" : "30px",
+          width: isMobile ? "50px" : "60px",
+          height: isMobile ? "50px" : "60px",
+          borderRadius: "50%",
+          backgroundColor: "#1a1a1a",
+          color: "white",
+          border: "none",
+          cursor: "pointer",
+          zIndex: 1000,
+          boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <svg width={isMobile ? "20" : "24"} height={isMobile ? "20" : "24"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </button>
     </div>
   );
 }
