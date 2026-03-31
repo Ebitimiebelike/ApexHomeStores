@@ -4,12 +4,14 @@ import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import { CartProvider } from "./context/CartContext"
 import { AuthProvider } from "./context/AuthContext"; 
+import { Analytics } from "@vercel/analytics/next"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <AuthProvider>
   <CartProvider> 
     <App />
+    <Analytics />
     </CartProvider>
     </AuthProvider>
   </BrowserRouter>
