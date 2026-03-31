@@ -1,66 +1,180 @@
-.hero-container {
+.hero-section {
   display: flex;
-  flex-direction: row; /* Forces text and image to be side-by-side */
-  justify-content: space-between;
-  align-items: center;
-  min-height: 100vh;
-  padding: 0 10%;
-  background-color: #f4f4f4; /* Light grey like the template */
+  flex: 1;
+  align-items: stretch;
+  padding: 0 0 0 6%;
+  min-height: calc(100vh - 160px);
+  background-color: #eae6e1;
 }
 
-.hero-content {
-  flex: 1;
-  max-width: 500px;
+.hero-text {
+  flex: 0 0 440px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 40px;
+  padding-bottom: 60px;
+  z-index: 2;
 }
 
 .hero-image-container {
   flex: 1;
-  display: flex;
-  justify-content: flex-end; /* Pushes image to the right */
-}
-
-.subtitle {
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 14px;
-  color: #888;
-}
-
-.hero-title {
-  font-size: 5rem; /* Large and bold */
-  font-weight: 800;
-  margin: 10px 0;
-  line-height: 1.1;
-}
-
-.hero-description {
-  color: #555;
-  line-height: 1.6;
-  margin-bottom: 30px;
-}
-
-.read-more-btn {
-  background-color: #a69080; /* The tan color from your screenshot */
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.read-more-btn:hover {
-  background-color: #8e7a6d;
+  position: relative;
+  overflow: hidden;
+  min-height: 540px;
 }
 
 .hero-image {
-  width: 110%; /* Makes it slightly larger to overflow elegantly */
-  max-width: 800px;
-  /* To get the 'floating' look from the template, use a PNG with no background */
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s ease;
 }
 
-@media (max-width: 768px) {
-  .hero {
-    flex-direction: column;
-    text-align: center;
+.hero-image:hover {
+  transform: scale(1.03);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-benefits {
+  display: flex;
+  gap: 18px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.hero-benefit-item {
+  font-size: 0.75rem;
+  color: #7a6e68;
+  font-family: sans-serif;
+}
+
+.hero-heading {
+  font-size: clamp(2.2rem, 4vw, 2.4rem);
+  font-weight: 700;
+  margin: 0 0 22px 0;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  font-family: 'Georgia', serif;
+}
+
+.hero-subtext {
+  color: #5a5550;
+  line-height: 1.75;
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+  max-width: 320px;
+  font-family: sans-serif;
+}
+
+@media (max-width: 1100px) {
+  .hero-section {
+    padding: 0 4%;
+    min-height: calc(100vh - 140px);
+  }
+
+  .hero-text {
+    flex: 0 0 360px;
+    padding-right: 24px;
   }
 }
+
+@media (max-width: 900px) {
+  .hero-section {
+    flex-direction: column;
+    padding: 20px 5% 35px;
+    min-height: auto;
+  }
+
+  .hero-text {
+    width: 100%;
+    flex: none;
+    padding-right: 0;
+    padding-bottom: 40px;
+  }
+
+  .hero-image-container {
+    min-height: 300px;
+  }
+
+  .hero-heading {
+    font-size: 2rem;
+    text-align: left;
+  }
+
+  .hero-subtext {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-section {
+    padding: 14px 4%;
+  }
+
+  .hero-heading {
+    font-size: 1.7rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .hero-actions button {
+    width: 100%;
+  }
+
+  .hero-category-wrapper {
+    display: none;
+  }
+
+  .hero-mobile-menu-button {
+    display: block !important;
+  }
+
+  .hero-mobile-menu-panel {
+    display: none;
+    position: absolute;
+    top: 68px;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border-top: 1px solid #dcd6cf;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.12);
+    z-index: 310;
+    padding: 14px 5%;
+  }
+
+  .hero-mobile-menu-panel.open {
+    display: block;
+  }
+
+  .hero-mobile-menu-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hero-mobile-menu-item {
+    border: none;
+    background: none;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-family: sans-serif;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .hero-mobile-menu-item:hover {
+    background-color: #f6f2ec;
+    color: #8b7355;
+  }
+}
+

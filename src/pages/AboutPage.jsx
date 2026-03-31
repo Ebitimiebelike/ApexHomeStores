@@ -11,7 +11,7 @@ export default function AboutPage() {
   ];
 
   const team = [
-    { name: "Ebitimi Daniels", role: "Founder & CEO",       initial: "E" },
+    { name: "Ebitimi Ebelike", role: "Founder & CEO",       initial: "E" },
     { name: "Sarah Okonkwo",   role: "Head of Design",       initial: "S" },
     { name: "James Whitfield", role: "Operations Director",  initial: "J" },
     { name: "Amara Cole",      role: "Customer Experience",  initial: "A" },

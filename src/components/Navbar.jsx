@@ -71,13 +71,26 @@ const Navbar = () => {
     },
   };
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <nav style={styles.navbar}>
+    <nav style={styles.navbar} className="navbar">
       {/* Logo */}
       <div style={styles.logo}>.Furniture</div>
 
+      {/* Mobile menu button */}
+      <button
+        className="nav-menu-button"
+        onClick={() => setMenuOpen((prev) => !prev)}
+        aria-label="Toggle navigation"
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
       {/* Nav Links */}
-      <ul style={styles.navLinks}>
+      <ul style={{...styles.navLinks, display: menuOpen ? "flex" : "none"}} className={`nav-links ${menuOpen ? "open" : ""}`}>
         {links.map((name) => (
           <li key={name}>
             <a
@@ -96,6 +109,7 @@ const Navbar = () => {
       <a
         href="#"
         style={styles.navAuth}
+        className="nav-auth"
         onMouseEnter={() => setHovered("signup")}
         onMouseLeave={() => setHovered(null)}
       >

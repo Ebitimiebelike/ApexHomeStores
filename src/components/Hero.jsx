@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import "./hero.css";
 
 const BG = "#eae6e1";
 
@@ -214,6 +215,7 @@ const IconBtn = ({ children, label, badge, hovered, id, setHovered }) => (
 export default function Hero() {
   const [hoveredIcon, setHoveredIcon] = useState(null);
   const [openMenu, setOpenMenu]       = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchVal, setSearchVal]     = useState("");
   const [scrolled, setScrolled]       = useState(false);
   const closeTimer                    = useRef(null);
@@ -389,16 +391,8 @@ export default function Hero() {
             />
           </form>
 
-          {/* Right icons — Shortlist, Account, Basket */}
-          <div style={{ display: "flex", alignItems: "center", gap: "20px", flexShrink: 0 }}>
-
-            {/* Shortlist (heart) — no functionality yet, placeholder */}
-            <IconBtn id="heart" label="Shortlist" hovered={hoveredIcon} setHovered={setHoveredIcon}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-            </IconBtn>
+          {/* Right icons — Account, Basket, Mobile Menu */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
 
             {/* Account icon:
                 - If logged in: shows first name, clicking logs out
@@ -439,6 +433,24 @@ export default function Hero() {
                 </svg>
               </IconBtn>
             </div>
+
+            {/* Mobile menu icon — only shown at small screens */}
+            <button
+              className="hero-mobile-menu-button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Open category menu"
+              style={{
+                border: "none", background: "none", cursor: "pointer",
+                padding: "8px", display: "none",
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -601,17 +613,10 @@ export default function Hero() {
       </div>
 
       {/* ── HERO SECTION ── */}
-      <div style={{
-        display: "flex", flex: 1, alignItems: "stretch",
-        padding: "0 0 0 6%", minHeight: "calc(100vh - 160px)",
-      }}>
+      <div className="hero-section">
 
         {/* LEFT: Text content */}
-        <div style={{
-          flex: "0 0 440px", display: "flex", flexDirection: "column",
-          justifyContent: "center", paddingRight: "40px",
-          paddingBottom: "60px", zIndex: 2,
-        }}>
+        <div className="hero-text">
           <span style={{
             fontSize: "0.78rem", color: "#7a6e68", letterSpacing: "1.5px",
             textTransform: "uppercase", marginBottom: "18px", fontFamily: "sans-serif",
@@ -619,7 +624,7 @@ export default function Hero() {
             Free shipping on orders over $199
           </span>
 
-          <h1 style={{
+          <h1 className="hero-heading" style={{
             fontSize: "clamp(2.2rem, 4vw, 2.4rem)", fontWeight: "700",
             color: "#1a1a1a", margin: "0 0 22px 0",
             lineHeight: 1.15, letterSpacing: "-1px", fontFamily: "'Georgia', serif",
@@ -629,7 +634,7 @@ export default function Hero() {
             Room in Your Home.
           </h1>
 
-          <p style={{
+          <p className="hero-subtext" style={{
             color: "#5a5550", lineHeight: "1.75", fontSize: "0.9rem",
             marginBottom: "32px", maxWidth: "320px", fontFamily: "sans-serif",
           }}>
@@ -638,7 +643,7 @@ export default function Hero() {
             Easy returns. Secure checkout. Trusted by 50,000+ homes.
           </p>
 
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+          <div className="hero-actions">
             <button
               onMouseEnter={() => setHoveredIcon("btn")}
               onMouseLeave={() => setHoveredIcon(null)}
@@ -669,9 +674,9 @@ export default function Hero() {
             </button>
           </div>
 
-          <div style={{ display: "flex", gap: "18px", marginTop: "24px" }}>
+          <div className="hero-benefits">
             {["⭐ 4.9 Rated", "🚚 Free Returns", "🔒 Secure Pay"].map(b => (
-              <span key={b} style={{ fontSize: "0.75rem", color: "#7a6e68", fontFamily: "sans-serif" }}>
+              <span key={b} className="hero-benefit-item">
                 {b}
               </span>
             ))}
@@ -679,12 +684,12 @@ export default function Hero() {
         </div>
 
         {/* RIGHT: Sofa image — edges fade into background */}
-        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        <div className="hero-image-container">
           <img
+            className="hero-image"
             src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1400&q=80"
             alt="Green velvet sofa"
             style={{
-              width: "100%", height: "100%",
               objectFit: "cover", objectPosition: "center",
               display: "block",
               WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 14%, black 84%, transparent 100%)",
