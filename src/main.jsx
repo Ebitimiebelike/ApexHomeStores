@@ -4,7 +4,7 @@ import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import { CartProvider } from "./context/CartContext"
 import { AuthProvider } from "./context/AuthContext"; 
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from '@vercel/analytics/react';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
