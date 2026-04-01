@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import products from "../data/products";
 import { useCart } from "../context/CartContext";
-import { formatNaira } from "../utils/currency"
+import { formatNaira } from "../Utils/currency"
 import Footer from "../components/Footer";
 
 export default function ProductPage() {

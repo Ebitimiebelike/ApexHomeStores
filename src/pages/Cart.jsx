@@ -1,6 +1,6 @@
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
-import { formatNaira } from "../utils/currency";
+import { formatNaira } from "../Utils/currency";
 import Footer from "../components/Footer";
 
 export default function Cart() {

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { formatNaira } from "../utils/currency";
+import { formatNaira } from "../Utils/currency";
 const BG = "#eae6e1";
 
 export default function ProductCard({ product }) {

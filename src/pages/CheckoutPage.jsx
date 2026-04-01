@@ -156,31 +156,8 @@ function StepWelcome({ formData, setFormData, onNext }) {
 }
 
 // ── STEP 2: Delivery ──────────────────────────────────────────
-function StepDelivery({ formData, setFormData, onNext, onBack }) {
-  const [errors, setErrors] = useState({});
-
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.firstName.trim()) newErrors.firstName = "Required";
-    if (!formData.lastName.trim())  newErrors.lastName  = "Required";
-    if (!formData.address.trim())   newErrors.address   = "Required";
-    if (!formData.city.trim())      newErrors.city      = "Required";
-    if (!formData.postcode.trim())  newErrors.postcode  = "Required";
-    return newErrors;
-  };
-
-  const handleContinue = () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    setErrors({});
-    onNext();
-  };
-
-  // Reusable field component defined inline
-  const Field = ({ label, field, placeholder, half }) => (
+function DeliveryField({ label, field, placeholder, half, formData, setFormData, errors }) {
+  return (
     <div style={{ flex: half ? "1 1 45%" : "1 1 100%" }}>
       <label style={{ display: "block", fontSize: "0.82rem",
         fontWeight: "600", color: "#1a1a1a",
@@ -208,6 +185,30 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
       )}
     </div>
   );
+}
+
+function StepDelivery({ formData, setFormData, onNext, onBack }) {
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.firstName.trim()) newErrors.firstName = "Required";
+    if (!formData.lastName.trim())  newErrors.lastName  = "Required";
+    if (!formData.address.trim())   newErrors.address   = "Required";
+    if (!formData.city.trim())      newErrors.city      = "Required";
+    if (!formData.postcode.trim())  newErrors.postcode  = "Required";
+    return newErrors;
+  };
+
+  const handleContinue = () => {
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
+    onNext();
+  };
 
   return (
     <div style={{ maxWidth: "560px", margin: "0 auto", padding: "48px 20px" }}>
@@ -221,11 +222,11 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
-        <Field label="First name"   field="firstName" placeholder="John"           half />
-        <Field label="Last name"    field="lastName"  placeholder="Smith"          half />
-        <Field label="Address"      field="address"   placeholder="123 High Street"     />
-        <Field label="City"         field="city"      placeholder="London"         half />
-        <Field label="Postcode"     field="postcode"  placeholder="SW1A 1AA"       half />
+        <DeliveryField label="First name"   field="firstName" placeholder="John"           half formData={formData} setFormData={setFormData} errors={errors} />
+        <DeliveryField label="Last name"    field="lastName"  placeholder="Smith"          half formData={formData} setFormData={setFormData} errors={errors} />
+        <DeliveryField label="Address"      field="address"   placeholder="123 High Street"     formData={formData} setFormData={setFormData} errors={errors} />
+        <DeliveryField label="City"         field="city"      placeholder="London"         half formData={formData} setFormData={setFormData} errors={errors} />
+        <DeliveryField label="Postcode"     field="postcode"  placeholder="SW1A 1AA"       half formData={formData} setFormData={setFormData} errors={errors} />
       </div>
 
       {/* Delivery method */}
