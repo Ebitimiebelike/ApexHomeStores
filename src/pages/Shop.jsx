@@ -4,6 +4,7 @@ import products from "../data/products";
 import ProductCard from "../components/ProductCard";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import Footer from "../components/Footer";
 
 const ALL_CATEGORIES = ["All", ...new Set(products.map(p => p.category))];
 
@@ -238,6 +239,7 @@ export default function Shop() {
           </button>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

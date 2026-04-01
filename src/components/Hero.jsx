@@ -2,11 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import "./hero.css";
+import Footer from "../components/Footer";
 
 const BG = "#eae6e1";
 
-// ── Sofa icon SVGs per subcategory ──────────────────────────────
+// ── Responsive breakpoint ─────────────────────────────────────────
+// Below this width: show hamburger, hide category bar
+const MOBILE_BREAKPOINT = 768;
+
+// ── Furniture category SVG icons ─────────────────────────────────
 const SofaIcon = () => (
   <svg width="36" height="28" viewBox="0 0 60 40" fill="none">
     <rect x="4" y="18" width="52" height="14" rx="3" fill="#8b7355"/>
@@ -64,7 +68,7 @@ const FootstoolIcon = () => (
   </svg>
 );
 
-// ── Mega-menu data ───────────────────────────────────────────────
+// ── Mega-menu data ────────────────────────────────────────────────
 const MENUS = {
   "Sofas & Chairs": [
     {
@@ -113,9 +117,7 @@ const MENUS = {
   "Living Room": [
     {
       icon: <SofaIcon />, title: "Sofas",
-      sections: [
-        { label: "Featured:", items: ["Corner sofas", "Sofa beds", "Modular sofas"] },
-      ],
+      sections: [{ label: "Featured:", items: ["Corner sofas", "Sofa beds", "Modular sofas"] }],
     },
     {
       icon: <CabinetIcon />, title: "TV Units & Media",
@@ -155,9 +157,7 @@ const MENUS = {
   "Accessories": [
     {
       icon: <FootstoolIcon />, title: "Soft Furnishings",
-      sections: [
-        { label: "Shop by type:", items: ["Cushions", "Throws & blankets", "Rugs"] },
-      ],
+      sections: [{ label: "Shop by type:", items: ["Cushions", "Throws & blankets", "Rugs"] }],
     },
     {
       icon: <CabinetIcon />, title: "Lighting",
@@ -174,85 +174,159 @@ const MENUS = {
   ],
 };
 
-// ── These are the simple page links (not category dropdowns) ─────
-// Each has a label shown in the nav and a path to navigate to
 const PAGE_LINKS = [
   { label: "About Us", path: "/about" },
   { label: "Contact",  path: "/contact" },
 ];
 
-// ── Icon button ──────────────────────────────────────────────────
-const IconBtn = ({ children, label, badge, hovered, id, setHovered }) => (
-  <button
-    onMouseEnter={() => setHovered(id)}
-    onMouseLeave={() => setHovered(null)}
-    style={{
-      background: "none", border: "none", cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: "3px",
-      color: hovered === id ? "#8b7355" : "#1a1a1a",
-      transition: "color 0.2s", padding: "0", position: "relative",
-    }}
-  >
-    <div style={{ position: "relative" }}>
-      {children}
-      {badge !== undefined && (
-        <div style={{
-          position: "absolute", top: "-6px", right: "-8px",
-          backgroundColor: "#8b0000", color: "white",
-          borderRadius: "50%", width: "16px", height: "16px",
-          fontSize: "0.6rem", fontWeight: "700",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>{badge}</div>
-      )}
-    </div>
-    <span style={{ fontSize: "0.6rem", letterSpacing: "0.3px", fontFamily: "sans-serif", whiteSpace: "nowrap" }}>
-      {label}
-    </span>
-  </button>
+// ── Trustpilot star ───────────────────────────────────────────────
+const TrustStar = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="#00b67a">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+  </svg>
 );
 
-// ── Main component ───────────────────────────────────────────────
+// ── Mobile slide-in drawer ────────────────────────────────────────
+function MobileDrawer({ categories, onClose, onNavigate }) {
+  return (
+    <>
+      {/* Dark backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0,
+          backgroundColor: "rgba(0,0,0,0.45)",
+          zIndex: 998,
+        }}
+      />
+      {/* Drawer panel slides in from right */}
+      <div style={{
+        position: "fixed", top: 0, right: 0,
+        width: "min(320px, 88vw)", height: "100%",
+        backgroundColor: "white", zIndex: 999,
+        overflowY: "auto", boxShadow: "-4px 0 24px rgba(0,0,0,0.15)",
+        animation: "slideIn 0.22s ease",
+      }}>
+        <style>{`
+          @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to   { transform: translateX(0); }
+          }
+        `}</style>
+
+        {/* Drawer header */}
+        <div style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid #e8e4df",
+          backgroundColor: "#8b7355",
+        }}>
+          <span style={{
+            fontWeight: "700", fontSize: "0.95rem",
+            fontFamily: "sans-serif", color: "white",
+          }}>
+            Browse Categories
+          </span>
+          <button onClick={onClose} style={{
+            background: "none", border: "none",
+            fontSize: "1.5rem", cursor: "pointer",
+            color: "white", lineHeight: 1, padding: "0 4px",
+          }}>×</button>
+        </div>
+
+        {/* Category list */}
+        <div style={{ padding: "12px 0" }}>
+          {categories.map(cat => (
+            <div key={cat}
+              onClick={() => { onNavigate(`/shop?category=${encodeURIComponent(cat)}`); onClose(); }}
+              style={{
+                display: "flex", alignItems: "center", gap: "14px",
+                padding: "14px 20px", cursor: "pointer",
+                borderBottom: "1px solid #f4f0eb",
+                transition: "background-color 0.15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = "#faf7f4"}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              <div style={{ flexShrink: 0 }}>{MENUS[cat][0].icon}</div>
+              <span style={{
+                fontSize: "0.92rem", fontWeight: "600",
+                fontFamily: "sans-serif", color: "#1a1a1a",
+              }}>
+                {cat}
+              </span>
+              <svg style={{ marginLeft: "auto" }} width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+          ))}
+        </div>
+
+        {/* Page links */}
+        <div style={{
+          borderTop: "2px solid #e8e4df",
+          padding: "16px 20px",
+          display: "flex", flexDirection: "column", gap: "12px",
+        }}>
+          {PAGE_LINKS.map(({ label, path }) => (
+            <span key={label}
+              onClick={() => { onNavigate(path); onClose(); }}
+              style={{
+                fontSize: "0.88rem", color: "#8b7355",
+                fontFamily: "sans-serif", cursor: "pointer",
+                textDecoration: "underline",
+              }}>
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Main Hero component ───────────────────────────────────────────
 export default function Hero() {
   const [hoveredIcon, setHoveredIcon] = useState(null);
-  const [openMenu, setOpenMenu]       = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchVal, setSearchVal]     = useState("");
-  const [scrolled, setScrolled]       = useState(false);
-  const closeTimer                    = useRef(null);
+  const [openMenu,    setOpenMenu]    = useState(null);
+  const [mobileOpen,  setMobileOpen]  = useState(false);
+  const [searchVal,   setSearchVal]   = useState("");
+  const [scrolled,    setScrolled]    = useState(false);
+  const [isMobile,    setIsMobile]    = useState(window.innerWidth < MOBILE_BREAKPOINT);
+  const closeTimer = useRef(null);
 
-  // Zone 2 — router + context hooks
-  const navigate        = useNavigate();
-  const { totalItems }  = useCart();
+  const navigate       = useNavigate();
+  const { totalItems } = useCart();
   const { user, logout } = useAuth();
+  const isLoggedIn = !!user;
 
-  // Derived: is anyone logged in?
-  // If user is not null, someone is logged in
-  const isLoggedIn = !!user; // !! converts any value to true/false
+  // Track window width for responsive hiding/showing
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
-    // Cleanup: remove listener when component unmounts
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // All category names from the MENUS object
+  // Close mobile menu when screen grows back to desktop
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
+
   const categories = Object.keys(MENUS);
 
-  // Mega menu hover handlers
-  const handleCatEnter = (cat) => {
-    clearTimeout(closeTimer.current);
-    setOpenMenu(cat);
-  };
-  const handleCatLeave = () => {
-    closeTimer.current = setTimeout(() => setOpenMenu(null), 120);
-  };
-  const handleMenuEnter = () => clearTimeout(closeTimer.current);
-  const handleMenuLeave = () => {
-    closeTimer.current = setTimeout(() => setOpenMenu(null), 120);
-  };
+  const handleCatEnter = (cat) => { clearTimeout(closeTimer.current); setOpenMenu(cat); };
+  const handleCatLeave = ()    => { closeTimer.current = setTimeout(() => setOpenMenu(null), 120); };
+  const handleMenuEnter = ()   => clearTimeout(closeTimer.current);
+  const handleMenuLeave = ()   => { closeTimer.current = setTimeout(() => setOpenMenu(null), 120); };
 
-  // Search submit — navigate to shop with search query
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchVal.trim()) {
@@ -262,80 +336,100 @@ export default function Hero() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh", backgroundColor: BG,
-      fontFamily: "'Georgia', serif", display: "flex", flexDirection: "column",
-    }}>
+    <div style={{ minHeight: "100vh", backgroundColor: BG, fontFamily: "'Georgia', serif" }}>
 
-      {/* ── STICKY NAVBAR ── */}
+      {/* Mobile drawer — only renders when open */}
+      {mobileOpen && (
+        <MobileDrawer
+          categories={categories}
+          onClose={() => setMobileOpen(false)}
+          onNavigate={navigate}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          STICKY NAVBAR
+      ══════════════════════════════════════════════════════════ */}
       <div style={{
         position: "sticky", top: 0, zIndex: 200,
         boxShadow: scrolled ? "0 2px 14px rgba(0,0,0,0.10)" : "none",
         transition: "box-shadow 0.3s",
-        backgroundColor: BG,
       }}>
 
-        {/* ── 1. PROMO BAR ── */}
+        {/* ── LAYER 1: Trustpilot ─────────────────────────────── */}
         <div style={{
-          backgroundColor: "#2d1a0e", padding: "7px 4%",
-          display: "flex", justifyContent: "space-between", alignItems: "center",
+          backgroundColor: "white",
+          borderBottom: "1px solid #e8e4df",
+          padding: "6px 4%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}>
-          {/* Easter promo — left side */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "10px",
-            color: "#f5d98b", fontSize: "0.78rem", fontFamily: "sans-serif",
-          }}>
-            <span style={{ fontSize: "1.1rem" }}>🐣</span>
-            <span>
-              <strong>Easter Sale — up to 30% off</strong>
-              &nbsp;·&nbsp; Use code &nbsp;
-              <span style={{
-                backgroundColor: "#f5d98b", color: "#2d1a0e",
-                padding: "1px 7px", borderRadius: "3px", fontWeight: "700",
-              }}>EASTER30</span>
-              &nbsp; at checkout &nbsp;·&nbsp; Ends 21 Apr
-            </span>
+          <div style={{ display: "flex", gap: "2px" }}>
+            {[1,2,3,4,5].map(i => <TrustStar key={i} />)}
           </div>
-
-          {/* Track my order — right side */}
-          <a
-            href="#"
-            onMouseEnter={() => setHoveredIcon("track")}
-            onMouseLeave={() => setHoveredIcon(null)}
-            style={{
-              display: "flex", alignItems: "center", gap: "7px",
-              textDecoration: "none",
-              color: hoveredIcon === "track" ? "#f5d98b" : "#d4c9bc",
-              fontSize: "0.78rem", fontFamily: "sans-serif",
-              transition: "color 0.2s", whiteSpace: "nowrap",
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="3" width="15" height="13" rx="1"/>
-              <path d="M16 8h4l3 5v3h-7V8z"/>
-              <circle cx="5.5" cy="18.5" r="2.5"/>
-              <circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            Track my order
-          </a>
+          <span style={{ fontSize: "0.88rem", fontFamily: "sans-serif", color: "#1a1a1a", fontWeight: "700" }}>
+            Trustpilot
+          </span>
+          <span style={{ fontSize: "0.8rem", color: "#5a5550", fontFamily: "sans-serif" }}>
+            4.9 · Based on 50,000+ reviews
+          </span>
         </div>
 
-        {/* ── 2. MAIN BAR: Logo | Search | Icons ── */}
+        {/* ── LAYER 2: Red promo banner ────────────────────────── */}
         <div style={{
-          backgroundColor: BG, padding: "14px 4%",
-          display: "flex", alignItems: "center", gap: "20px",
-          borderBottom: "1px solid #d4cfc9",
+          backgroundColor: "#8b0000",
+          padding: isMobile ? "10px 4%" : "8px 4%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          gap: "6px",
+          textAlign: "center",
+        }}>
+          <span style={{
+            color: "white", fontWeight: "800",
+            fontSize: isMobile ? "0.82rem" : "0.88rem",
+            fontFamily: "sans-serif", letterSpacing: "1px",
+            textTransform: "uppercase",
+          }}>
+            🐣 Easter Sale + Early Bird Offers &nbsp;·&nbsp; Use code
+          </span>
+          <span style={{
+            backgroundColor: "white", color: "#8b0000",
+            padding: "1px 10px", borderRadius: "3px",
+            fontWeight: "900", fontSize: isMobile ? "0.82rem" : "0.88rem",
+            fontFamily: "sans-serif", letterSpacing: "1px",
+          }}>
+            EASTER30
+          </span>
+          <span style={{
+            color: "white", fontWeight: "800",
+            fontSize: isMobile ? "0.82rem" : "0.88rem",
+            fontFamily: "sans-serif", letterSpacing: "1px",
+            textTransform: "uppercase",
+          }}>
+            at checkout &nbsp;·&nbsp; Ends 21 Apr
+          </span>
+        </div>
+
+        {/* ── LAYER 3: Main navbar bar ─────────────────────────── */}
+        <div style={{
+          backgroundColor: "white",
+          padding: "10px 4%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          borderBottom: "1px solid #e8e4df",
         }}>
 
-          {/* Logo — clicking it goes home */}
-          <div
-            onClick={() => navigate("/")}
-            style={{
-              display: "flex", alignItems: "center", gap: "10px",
-              flexShrink: 0, marginRight: "8px", cursor: "pointer",
-            }}
-          >
+          {/* Logo */}
+          <div onClick={() => navigate("/")} style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            cursor: "pointer", flexShrink: 0,
+          }}>
             <div style={{
               width: "44px", height: "44px", backgroundColor: "#8b7355",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -347,32 +441,100 @@ export default function Hero() {
               </svg>
             </div>
             <div>
-              <div style={{
-                fontWeight: "900", fontSize: "1rem", color: "#1a1a1a",
-                lineHeight: 1.1, fontFamily: "'Georgia', serif",
-              }}>
+              <div style={{ fontWeight: "900", fontSize: "1rem", color: "#1a1a1a", lineHeight: 1.1, fontFamily: "'Georgia', serif" }}>
                 Apex Home
               </div>
-              <div style={{
-                fontWeight: "400", fontSize: "0.62rem", color: "#8b7355",
-                letterSpacing: "2px", textTransform: "uppercase",
-                fontFamily: "'Georgia', serif",
-              }}>
+              <div style={{ fontWeight: "400", fontSize: "0.6rem", color: "#8b7355", letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'Georgia', serif" }}>
                 Furnishings
               </div>
             </div>
           </div>
 
-          {/* Search bar — pressing Enter navigates to /shop?search=... */}
-          <form onSubmit={handleSearch} style={{ flex: 1, position: "relative" }}>
-            <svg
-              style={{
-                position: "absolute", left: "14px", top: "50%",
-                transform: "translateY(-50%)", pointerEvents: "none",
-              }}
-              width="15" height="15" viewBox="0 0 24 24" fill="none"
-              stroke="#888" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          {/* Right icons */}
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "16px" : "22px", flexShrink: 0 }}>
+
+            {/* Account */}
+            <div
+              onClick={() => isLoggedIn ? logout() : navigate("/login")}
+              onMouseEnter={() => setHoveredIcon("account")}
+              onMouseLeave={() => setHoveredIcon(null)}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}
             >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke={isLoggedIn ? "#8b7355" : hoveredIcon === "account" ? "#8b7355" : "#1a1a1a"}
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span style={{ fontSize: "0.58rem", fontFamily: "sans-serif", color: isLoggedIn ? "#8b7355" : hoveredIcon === "account" ? "#8b7355" : "#5a5550" }}>
+                {isLoggedIn ? user.name.split(" ")[0] : "Account"}
+              </span>
+            </div>
+
+            {/* Basket */}
+            <div
+              onClick={() => navigate("/cart")}
+              onMouseEnter={() => setHoveredIcon("basket")}
+              onMouseLeave={() => setHoveredIcon(null)}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}
+            >
+              <div style={{ position: "relative" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke={hoveredIcon === "basket" ? "#8b7355" : "#1a1a1a"}
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                {totalItems > 0 && (
+                  <div style={{
+                    position: "absolute", top: "-7px", right: "-8px",
+                    backgroundColor: "#8b0000", color: "white",
+                    borderRadius: "50%", width: "16px", height: "16px",
+                    fontSize: "0.6rem", fontWeight: "700",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {totalItems}
+                  </div>
+                )}
+              </div>
+              <span style={{ fontSize: "0.58rem", fontFamily: "sans-serif", color: hoveredIcon === "basket" ? "#8b7355" : "#5a5550" }}>
+                Basket
+              </span>
+            </div>
+
+            {/* Hamburger — ONLY visible on mobile */}
+            {isMobile && (
+              <div
+                onClick={() => setMobileOpen(true)}
+                onMouseEnter={() => setHoveredIcon("menu")}
+                onMouseLeave={() => setHoveredIcon(null)}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke={hoveredIcon === "menu" ? "#8b7355" : "#1a1a1a"}
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="6"  x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+                <span style={{ fontSize: "0.58rem", fontFamily: "sans-serif", color: hoveredIcon === "menu" ? "#8b7355" : "#5a5550" }}>
+                  Menu
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── LAYER 4: Full-width search bar ──────────────────── */}
+        <div style={{ backgroundColor: "white", padding: "10px 4%", borderBottom: "1px solid #e8e4df" }}>
+          <form onSubmit={handleSearch} style={{ position: "relative" }}>
+            <svg style={{
+              position: "absolute", left: "16px", top: "50%",
+              transform: "translateY(-50%)", pointerEvents: "none",
+            }}
+              width="17" height="17" viewBox="0 0 24 24" fill="none"
+              stroke="#888" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
@@ -383,324 +545,243 @@ export default function Hero() {
               placeholder="Search for a product or brand"
               style={{
                 width: "100%", boxSizing: "border-box",
-                padding: "11px 16px 11px 42px",
-                border: "1.5px solid #c8c2bb", borderRadius: "4px",
-                backgroundColor: "white", fontSize: "0.87rem",
-                fontFamily: "sans-serif", color: "#1a1a1a", outline: "none",
+                padding: "12px 16px 12px 46px",
+                border: "2px solid #00b67a",
+                borderRadius: "6px",
+                backgroundColor: "white",
+                fontSize: "0.92rem",
+                fontFamily: "sans-serif",
+                color: "#1a1a1a",
+                outline: "none",
               }}
             />
           </form>
-
-          {/* Right icons — Account, Basket, Mobile Menu */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
-
-            {/* Account icon:
-                - If logged in: shows first name, clicking logs out
-                - If logged out: shows "Account", clicking goes to /login */}
-            <div
-              onClick={() => isLoggedIn ? logout() : navigate("/login")}
-              style={{ cursor: "pointer" }}
-            >
-              <IconBtn
-                id="account"
-                label={isLoggedIn ? user.name.split(" ")[0] : "Account"}
-                hovered={hoveredIcon}
-                setHovered={setHoveredIcon}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                  stroke={isLoggedIn ? "#8b7355" : "currentColor"}
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </IconBtn>
-            </div>
-
-            {/* Basket — shows live item count, clicking goes to /cart */}
-            <div onClick={() => navigate("/cart")} style={{ cursor: "pointer" }}>
-              <IconBtn
-                id="basket"
-                label="Basket"
-                badge={totalItems}
-                hovered={hoveredIcon}
-                setHovered={setHoveredIcon}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <path d="M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-              </IconBtn>
-            </div>
-
-            {/* Mobile menu icon — only shown at small screens */}
-            <button
-              className="hero-mobile-menu-button"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              aria-label="Open category menu"
-              style={{
-                border: "none", background: "none", cursor: "pointer",
-                padding: "8px", display: "none",
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-          </div>
         </div>
 
-        {/* ── 3. CATEGORY BAR + PAGE LINKS + MEGA MENU ── */}
-        <div style={{ position: "relative" }}>
-          <div style={{
-            backgroundColor: BG, borderBottom: "2px solid #c8c2bb",
-            padding: "0 4%", display: "flex",
-            justifyContent: "space-between", alignItems: "center",
-          }}>
+        {/* ── LAYER 5: Category nav — HIDDEN on mobile ─────────── */}
+        {!isMobile && (
+          <div style={{ position: "relative" }}>
+            <div style={{
+              backgroundColor: "white",
+              borderBottom: "2px solid #e8e4df",
+              padding: "0 4%",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}>
+              {/* Category buttons */}
+              <div style={{ display: "flex" }}>
+                {categories.map(cat => (
+                  <button key={cat}
+                    onMouseEnter={() => handleCatEnter(cat)}
+                    onMouseLeave={handleCatLeave}
+                    onClick={() => navigate(`/shop?category=${encodeURIComponent(cat)}`)}
+                    style={{
+                      background: "none", border: "none",
+                      borderBottom: openMenu === cat ? "3px solid #8b7355" : "3px solid transparent",
+                      padding: "12px 16px", fontSize: "0.87rem",
+                      fontWeight: openMenu === cat ? "700" : "500",
+                      color: openMenu === cat ? "#8b7355" : "#1a1a1a",
+                      cursor: "pointer", transition: "all 0.15s",
+                      fontFamily: "sans-serif", marginBottom: "-2px", whiteSpace: "nowrap",
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
 
-            {/* LEFT SIDE — category buttons (open mega menu on hover, navigate on click) */}
-            <div style={{ display: "flex" }}>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onMouseEnter={() => handleCatEnter(cat)}
-                  onMouseLeave={handleCatLeave}
-                  onClick={() => navigate(`/shop?category=${encodeURIComponent(cat)}`)}
-                  style={{
-                    background: "none", border: "none",
-                    borderBottom: openMenu === cat ? "3px solid #8b7355" : "3px solid transparent",
-                    padding: "12px 18px", fontSize: "0.87rem",
-                    fontWeight: openMenu === cat ? "700" : "500",
-                    color: openMenu === cat ? "#8b7355" : "#1a1a1a",
-                    cursor: "pointer", transition: "all 0.15s",
-                    fontFamily: "sans-serif", marginBottom: "-2px", whiteSpace: "nowrap",
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
+              {/* About / Contact */}
+              <div style={{ display: "flex" }}>
+                {PAGE_LINKS.map(({ label, path }) => (
+                  <button key={label}
+                    onClick={() => navigate(path)}
+                    onMouseEnter={() => setHoveredIcon(label)}
+                    onMouseLeave={() => setHoveredIcon(null)}
+                    style={{
+                      background: "none", border: "none",
+                      borderBottom: "3px solid transparent",
+                      padding: "12px 16px", fontSize: "0.87rem",
+                      fontWeight: "500",
+                      color: hoveredIcon === label ? "#8b7355" : "#5a5550",
+                      cursor: "pointer", transition: "color 0.15s",
+                      fontFamily: "sans-serif", marginBottom: "-2px", whiteSpace: "nowrap",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* RIGHT SIDE — About Us and Contact page links */}
-            <div style={{ display: "flex" }}>
-              {PAGE_LINKS.map(({ label, path }) => (
-                <button
-                  key={label}
-                  onClick={() => navigate(path)}
-                  onMouseEnter={() => setHoveredIcon(label)}
-                  onMouseLeave={() => setHoveredIcon(null)}
-                  style={{
-                    background: "none", border: "none",
-                    borderBottom: "3px solid transparent",
-                    padding: "12px 18px", fontSize: "0.87rem",
-                    fontWeight: "500",
-                    color: hoveredIcon === label ? "#8b7355" : "#5a5550",
-                    cursor: "pointer", transition: "color 0.15s",
-                    fontFamily: "sans-serif", marginBottom: "-2px", whiteSpace: "nowrap",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* MEGA MENU DROPDOWN — appears on category hover */}
-          {openMenu && MENUS[openMenu] && (
-            <div
-              onMouseEnter={handleMenuEnter}
-              onMouseLeave={handleMenuLeave}
-              style={{
-                position: "absolute", top: "100%", left: 0, right: 0,
-                backgroundColor: "white",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.13)",
-                padding: "28px 4%",
-                display: "grid",
-                gridTemplateColumns: `repeat(${MENUS[openMenu].length}, 1fr)`,
-                gap: "0",
-                borderTop: "3px solid #8b7355",
-                zIndex: 300,
-                animation: "fadeDown 0.15s ease",
-              }}
-            >
-              <style>{`
-                @keyframes fadeDown {
-                  from { opacity: 0; transform: translateY(-6px); }
-                  to   { opacity: 1; transform: translateY(0); }
-                }
-              `}</style>
-
-              {MENUS[openMenu].map((col, i) => (
-                <div key={col.title} style={{
-                  padding: "0 28px 0 0",
-                  borderRight: i < MENUS[openMenu].length - 1 ? "1px solid #e8e4df" : "none",
-                  marginRight: i < MENUS[openMenu].length - 1 ? "28px" : "0",
-                }}>
-                  {/* Column header */}
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: "12px",
-                    marginBottom: "16px", paddingBottom: "12px",
-                    borderBottom: "1px solid #e8e4df",
+            {/* Mega menu dropdown */}
+            {openMenu && MENUS[openMenu] && (
+              <div
+                onMouseEnter={handleMenuEnter}
+                onMouseLeave={handleMenuLeave}
+                style={{
+                  position: "absolute", top: "100%", left: 0, right: 0,
+                  backgroundColor: "white",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.13)",
+                  padding: "28px 4%",
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${MENUS[openMenu].length}, 1fr)`,
+                  borderTop: "3px solid #8b7355",
+                  zIndex: 300,
+                  animation: "fadeDown 0.15s ease",
+                }}
+              >
+                <style>{`
+                  @keyframes fadeDown {
+                    from { opacity: 0; transform: translateY(-6px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                  }
+                `}</style>
+                {MENUS[openMenu].map((col, i) => (
+                  <div key={col.title} style={{
+                    padding: "0 28px 0 0",
+                    borderRight: i < MENUS[openMenu].length - 1 ? "1px solid #e8e4df" : "none",
+                    marginRight: i < MENUS[openMenu].length - 1 ? "28px" : "0",
                   }}>
-                    <div style={{ flexShrink: 0 }}>{col.icon}</div>
-                    <div style={{
-                      display: "flex", alignItems: "center",
-                      justifyContent: "space-between", flex: 1,
-                    }}>
-                      <span style={{
-                        fontWeight: "700", fontSize: "0.95rem",
-                        color: "#1a1a1a", fontFamily: "sans-serif",
-                      }}>
-                        {col.title}
-                      </span>
-                      {/* View all navigates to shop filtered by the parent category */}
-                      <span
-                        onClick={() => {
-                          navigate(`/shop?category=${encodeURIComponent(openMenu)}`);
-                          setOpenMenu(null);
-                        }}
-                        style={{
-                          fontSize: "0.78rem", color: "#8b7355",
-                          textDecoration: "underline", fontFamily: "sans-serif",
-                          whiteSpace: "nowrap", marginLeft: "12px", cursor: "pointer",
-                        }}
-                      >
-                        View all
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Sub-items */}
-                  {col.sections.map((sec) => (
-                    <div key={sec.label} style={{ marginBottom: "14px" }}>
-                      <div style={{
-                        fontSize: "0.78rem", fontWeight: "700",
-                        color: "#1a1a1a", fontFamily: "sans-serif", marginBottom: "6px",
-                      }}>
-                        {sec.label}
-                      </div>
-                      {sec.items.map((item) => (
-                        <span
-                          key={item}
-                          onClick={() => {
-                            navigate(`/shop?category=${encodeURIComponent(openMenu)}`);
-                            setOpenMenu(null);
-                          }}
-                          style={{
-                            display: "block", fontSize: "0.83rem",
-                            color: "#4a4540", fontFamily: "sans-serif",
-                            textDecoration: "none", padding: "3px 0",
-                            lineHeight: 1.5, transition: "color 0.15s",
-                            cursor: "pointer",
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.color = "#8b7355"}
-                          onMouseLeave={e => e.currentTarget.style.color = "#4a4540"}
-                        >
-                          {item}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #e8e4df" }}>
+                      <div style={{ flexShrink: 0 }}>{col.icon}</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
+                        <span style={{ fontWeight: "700", fontSize: "0.95rem", color: "#1a1a1a", fontFamily: "sans-serif" }}>
+                          {col.title}
                         </span>
-                      ))}
+                        <span
+                          onClick={() => { navigate(`/shop?category=${encodeURIComponent(openMenu)}`); setOpenMenu(null); }}
+                          style={{ fontSize: "0.78rem", color: "#8b7355", textDecoration: "underline", fontFamily: "sans-serif", whiteSpace: "nowrap", marginLeft: "12px", cursor: "pointer" }}>
+                          View all
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    {col.sections.map(sec => (
+                      <div key={sec.label} style={{ marginBottom: "14px" }}>
+                        <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif", marginBottom: "6px" }}>
+                          {sec.label}
+                        </div>
+                        {sec.items.map(item => (
+                          <span key={item}
+                            onClick={() => { navigate(`/shop?category=${encodeURIComponent(openMenu)}`); setOpenMenu(null); }}
+                            style={{ display: "block", fontSize: "0.83rem", color: "#4a4540", fontFamily: "sans-serif", padding: "3px 0", lineHeight: 1.5, transition: "color 0.15s", cursor: "pointer" }}
+                            onMouseEnter={e => e.currentTarget.style.color = "#8b7355"}
+                            onMouseLeave={e => e.currentTarget.style.color = "#4a4540"}
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ── HERO SECTION ── */}
-      <div className="hero-section">
+      {/* ══════════════════════════════════════════════════════════
+          HERO SECTION
+      ══════════════════════════════════════════════════════════ */}
+      <div style={{
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "flex-start" : "stretch",
+        minHeight: isMobile ? "auto" : "calc(100vh - 220px)",
+        padding: isMobile ? "32px 6% 40px" : "0 0 0 6%",
+        gap: isMobile ? "28px" : "0",
+      }}>
 
-        {/* LEFT: Text content */}
-        <div className="hero-text">
-          <span style={{
-            fontSize: "0.78rem", color: "#7a6e68", letterSpacing: "1.5px",
-            textTransform: "uppercase", marginBottom: "18px", fontFamily: "sans-serif",
-          }}>
+        {/* Text content */}
+        <div style={{
+          flex: isMobile ? "unset" : "0 0 440px",
+          display: "flex", flexDirection: "column",
+          justifyContent: "center",
+          paddingRight: isMobile ? "0" : "40px",
+          paddingBottom: isMobile ? "0" : "60px",
+          zIndex: 2,
+          order: isMobile ? 1 : 0,
+        }}>
+          <span style={{ fontSize: "0.78rem", color: "#7a6e68", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "14px", fontFamily: "sans-serif" }}>
             Free shipping on orders over $199
           </span>
 
-          <h1 className="hero-heading" style={{
-            fontSize: "clamp(2.2rem, 4vw, 2.4rem)", fontWeight: "700",
-            color: "#1a1a1a", margin: "0 0 22px 0",
-            lineHeight: 1.15, letterSpacing: "-1px", fontFamily: "'Georgia', serif",
+          <h1 style={{
+            fontSize: isMobile ? "clamp(2rem, 8vw, 2.6rem)" : "clamp(2.2rem, 4vw, 2.6rem)",
+            fontWeight: "700", color: "#1a1a1a",
+            margin: "0 0 20px 0", lineHeight: 1.15,
+            letterSpacing: "-1px", fontFamily: "'Georgia', serif",
           }}>
             Find the Perfect<br/>
             <span style={{ color: "#8b7355" }}>Piece</span> for Every<br/>
             Room in Your Home.
           </h1>
 
-          <p className="hero-subtext" style={{
-            color: "#5a5550", lineHeight: "1.75", fontSize: "0.9rem",
-            marginBottom: "32px", maxWidth: "320px", fontFamily: "sans-serif",
-          }}>
+          <p style={{ color: "#5a5550", lineHeight: "1.75", fontSize: "0.9rem", marginBottom: "28px", maxWidth: "340px", fontFamily: "sans-serif" }}>
             Shop premium handcrafted furniture delivered straight to your door.
             Thousands of styles in stock — from sofas to dining sets.
             Easy returns. Secure checkout. Trusted by 50,000+ homes.
           </p>
 
-          <div className="hero-actions">
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
             <button
               onMouseEnter={() => setHoveredIcon("btn")}
               onMouseLeave={() => setHoveredIcon(null)}
               onClick={() => navigate("/shop")}
-              style={{
-                backgroundColor: hoveredIcon === "btn" ? "#6b5a50" : "#8b7355",
-                color: "white", border: "none", padding: "13px 32px",
-                fontSize: "0.85rem", fontWeight: "600", letterSpacing: "1px",
-                cursor: "pointer", transition: "background-color 0.25s",
-                fontFamily: "sans-serif",
-              }}
-            >
+              style={{ backgroundColor: hoveredIcon === "btn" ? "#6b5a50" : "#8b7355", color: "white", border: "none", padding: "13px 32px", fontSize: "0.85rem", fontWeight: "600", letterSpacing: "1px", cursor: "pointer", transition: "background-color 0.25s", fontFamily: "sans-serif" }}>
               Shop Now
             </button>
             <button
               onMouseEnter={() => setHoveredIcon("btn2")}
               onMouseLeave={() => setHoveredIcon(null)}
               onClick={() => navigate("/shop")}
-              style={{
-                backgroundColor: "transparent",
-                color: hoveredIcon === "btn2" ? "#8b7355" : "#1a1a1a",
-                border: "2px solid #1a1a1a", padding: "11px 24px",
-                fontSize: "0.85rem", fontWeight: "600", letterSpacing: "1px",
-                cursor: "pointer", transition: "all 0.25s", fontFamily: "sans-serif",
-              }}
-            >
+              style={{ backgroundColor: "transparent", color: hoveredIcon === "btn2" ? "#8b7355" : "#1a1a1a", border: "2px solid #1a1a1a", padding: "11px 24px", fontSize: "0.85rem", fontWeight: "600", letterSpacing: "1px", cursor: "pointer", transition: "all 0.25s", fontFamily: "sans-serif" }}>
               View Catalogue
             </button>
           </div>
 
-          <div className="hero-benefits">
+          <div style={{ display: "flex", gap: "18px", marginTop: "20px", flexWrap: "wrap" }}>
             {["⭐ 4.9 Rated", "🚚 Free Returns", "🔒 Secure Pay"].map(b => (
-              <span key={b} className="hero-benefit-item">
-                {b}
-              </span>
+              <span key={b} style={{ fontSize: "0.75rem", color: "#7a6e68", fontFamily: "sans-serif" }}>{b}</span>
             ))}
           </div>
         </div>
 
-        {/* RIGHT: Sofa image — edges fade into background */}
-        <div className="hero-image-container">
-          <img
-            className="hero-image"
-            src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1400&q=80"
-            alt="Green velvet sofa"
-            style={{
-              objectFit: "cover", objectPosition: "center",
-              display: "block",
-              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 14%, black 84%, transparent 100%)",
-              maskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 14%, black 84%, transparent 100%)",
-              WebkitMaskComposite: "source-in",
-              maskComposite: "intersect",
-              mixBlendMode: "multiply",
-            }}
-          />
-        </div>
+        {/* Sofa image
+            Desktop: fills the right half, blends at edges
+            Mobile: full-width below the text, no blend effect
+        */}
+        {isMobile ? (
+          <div style={{ width: "100%", order: 0 }}>
+            <img
+              src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=80"
+              alt="Green velvet sofa"
+              style={{
+                width: "100%", height: "220px",
+                objectFit: "cover", objectPosition: "center",
+                display: "block", borderRadius: "4px",
+              }}
+            />
+          </div>
+        ) : (
+          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+            <img
+              src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1400&q=80"
+              alt="Green velvet sofa"
+              style={{
+                width: "100%", height: "100%",
+                objectFit: "cover", objectPosition: "center",
+                display: "block",
+                // Blend left edge into background — right/top/bottom stay sharp
+                WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 30%)",
+                maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 15%, black 30%)",
+              }}
+            />
+          </div>
+        )}
       </div>
+      <Footer />
     </div>
   );
 }

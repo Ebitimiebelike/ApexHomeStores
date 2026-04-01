@@ -1,5 +1,7 @@
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { formatNaira } from "../utils/currency";
+import Footer from "../components/Footer";
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
@@ -71,7 +73,7 @@ export default function Cart() {
                 </h3>
                 <p style={{ margin: 0, fontSize: "0.95rem",
                   color: "#8b7355", fontFamily: "sans-serif", fontWeight: "600" }}>
-                  ${item.price}
+                  {formatNaira(item.price)}
                 </p>
               </div>
 
@@ -104,7 +106,7 @@ export default function Cart() {
                 <div style={{ textAlign: "right" }}>
                   <p style={{ margin: "0 0 6px", fontWeight: "700",
                     fontFamily: "sans-serif", color: "#1a1a1a" }}>
-                    ${item.price * item.quantity}
+                    {formatNaira(item.price * item.quantity)}
                   </p>
                   <button
                     onClick={() => removeFromCart(item.id)}
@@ -135,13 +137,13 @@ export default function Cart() {
             <div style={{ display: "flex", justifyContent: "space-between",
               fontSize: "0.88rem", fontFamily: "sans-serif", color: "#5a5550" }}>
               <span>Subtotal ({totalItems} items)</span>
-              <span>${totalPrice}</span>
+              <span>{formatNaira(totalPrice)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between",
               fontSize: "0.88rem", fontFamily: "sans-serif", color: "#5a5550" }}>
               <span>Delivery</span>
               <span style={{ color: "#2d6a2d", fontWeight: "600" }}>
-                {totalPrice >= 199 ? "FREE" : "$19.99"}
+                {totalPrice >= 199 ? "FREE" : formatNaira(19.99)}
               </span>
             </div>
           </div>
@@ -151,7 +153,7 @@ export default function Cart() {
             <span style={{ fontWeight: "700", fontSize: "1rem", color: "#1a1a1a" }}>Total</span>
             <span style={{ fontWeight: "700", fontSize: "1.1rem",
               color: "#1a1a1a", fontFamily: "sans-serif" }}>
-              ${totalPrice >= 199 ? totalPrice : totalPrice + 19.99}
+              {formatNaira(totalPrice >= 199 ? totalPrice : totalPrice + 19.99)}
             </span>
           </div>
 
@@ -159,7 +161,7 @@ export default function Cart() {
             <p style={{ margin: 0, fontSize: "0.78rem", color: "#8b7355",
               fontFamily: "sans-serif", backgroundColor: "#f5f0eb",
               padding: "10px", textAlign: "center" }}>
-              Add ${(199 - totalPrice).toFixed(2)} more for free delivery
+              Add {formatNaira(199 - totalPrice)} more for free delivery
             </p>
           )}
 
@@ -184,6 +186,7 @@ export default function Cart() {
           </button>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

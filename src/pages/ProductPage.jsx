@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import products from "../data/products";
 import { useCart } from "../context/CartContext";
+import { formatNaira } from "../utils/currency"
+import Footer from "../components/Footer";
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -102,11 +104,11 @@ export default function ProductPage() {
 
           <div style={{ display: "flex", alignItems: "center", gap: "14px", paddingTop: "4px" }}>
             <span style={{ fontSize: "1.6rem", fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif" }}>
-              ${product.price}
+              {formatNaira(product.price)}
             </span>
             {product.originalPrice && (
               <span style={{ fontSize: "1.1rem", color: "#aaa", textDecoration: "line-through", fontFamily: "sans-serif" }}>
-                ${product.originalPrice}
+                {formatNaira(product.originalPrice)}
               </span>
             )}
           </div>
@@ -126,7 +128,16 @@ export default function ProductPage() {
             onClick={handleAddToBasket}
             style={{ padding: "15px", backgroundColor: "#8b7355", color: "white", border: "none", fontSize: "0.95rem", fontWeight: "600", letterSpacing: "1px", cursor: "pointer", marginTop: "8px", fontFamily: "sans-serif" }}
           >
-            {addedMsg ? "✓ Added to Basket!" : `Add ${quantity} to Basket — $${product.price * quantity}`}
+            {addedMsg ? "✓ Added to Basket!" : `Add ${quantity} to Basket — ${formatNaira(product.price * quantity)}`}
+          </button>
+
+          <button
+            onClick={() => navigate("/shop")}
+            style={{ padding: "15px", backgroundColor: "transparent",
+              color: "#1a1a1a", border: "2px solid #1a1a1a",
+              fontSize: "0.95rem", fontWeight: "600", cursor: "pointer",marginTop: "8px",
+              fontFamily: "sans-serif" }}>
+            Continue Shopping
           </button>
 
           <div style={{ display: "flex", gap: "15px", paddingTop: "8px", borderTop: "1px solid #d4cfc9", flexWrap: "wrap" }}>
@@ -153,7 +164,7 @@ export default function ProductPage() {
                 <img src={p.image} alt={p.name} style={{ width: "100%", height: "180px", objectFit: "cover" }} />
                 <div style={{ padding: "14px" }}>
                   <p style={{ margin: "0 0 4px", fontSize: "0.92rem", fontWeight: "700", fontFamily: "'Georgia', serif" }}>{p.name}</p>
-                  <p style={{ margin: 0, fontSize: "0.9rem", color: "#8b7355", fontWeight: "600" }}>${p.price}</p>
+                  <p style={{ margin: 0, fontSize: "0.9rem", color: "#8b7355", fontWeight: "600" }}>{formatNaira(p.price)}</p>
                 </div>
               </div>
             ))}
@@ -186,6 +197,7 @@ export default function ProductPage() {
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
       </button>
+      <Footer />
     </div>
   );
 }

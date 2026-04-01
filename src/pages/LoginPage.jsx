@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Footer from "../components/Footer";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -170,6 +171,7 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
+      <Footer />
     </div>
   );
 }
