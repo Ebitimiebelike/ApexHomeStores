@@ -22,31 +22,26 @@ export default function LoginPage() {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async () => {
-  if (!email || !password) { setError("Please fill in all fields."); return; }
-
-  const result = await login(email, password);
-  if (!result.success) {
-    setError(result.message);
+const handleSubmit = async () => {
+  if (!formData.email || !formData.password) {
+    setError("Please fill in all fields.");
     return;
   }
-  navigate("/");
+
+  setLoading(true);
+
+  // Small timeout simulates a real server call
+  setTimeout(async () => {
+    const result = await login(formData.email, formData.password);
+    setLoading(false);
+
+    if (!result.success) {
+      setError(result.message || "Sign in failed.");
+    } else {
+      navigate("/"); // success — go home
+    }
+  }, 800);
 };
-
-    setLoading(true);
-
-    // Small timeout simulates a real server call
-    setTimeout(() => {
-      const errorMsg = login(formData.email, formData.password);
-      setLoading(false);
-
-      if (errorMsg) {
-        setError(errorMsg);
-      } else {
-        navigate("/"); // success — go home
-      }
-    }, 800);
-  };
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1",
