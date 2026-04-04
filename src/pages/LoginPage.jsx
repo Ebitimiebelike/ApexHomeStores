@@ -22,12 +22,16 @@ export default function LoginPage() {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = () => {
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      setError("Please fill in all fields.");
-      return;
-    }
+  const handleSubmit = async () => {
+  if (!email || !password) { setError("Please fill in all fields."); return; }
+
+  const result = await login(email, password);
+  if (!result.success) {
+    setError(result.message);
+    return;
+  }
+  navigate("/");
+};
 
     setLoading(true);
 

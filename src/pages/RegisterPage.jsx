@@ -37,15 +37,18 @@ export default function RegisterPage() {
     return e;
   };
 
-  const handleSubmit = () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    register(formData.name, formData.email, formData.password);
-    navigate("/");
-  };
+  const handleSubmit = async () => {
+  const newErrors = validate();
+  if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
+  try {
+    await register(formData.name, formData.email, formData.password);
+    navigate("/"); // success
+  } catch (err) {
+    // err.message comes from the server — e.g. "email already exists"
+    setErrors({ email: err.message });
+  }
+};
 
   const fields = [
     { label: "Full name",        field: "name",            type: "text",     placeholder: "John Smith" },

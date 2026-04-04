@@ -1,59 +1,79 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
+const API = "http://localhost:5000/api";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  const [user,    setUser]    = useState(null);
+  const [loading, setLoading] = useState(true); // NEW — checking token on load
 
-  // null means nobody is logged in
-  // When logged in it will look like: { name: "John", email: "john@email.com" }
-  const [user, setUser] = useState(null);
+  // On app load, check if there's a saved token and validate it
+  // This is how "stay logged in" works — the token is saved in localStorage,
+  // and we verify it's still valid with the backend on every page load
+  useEffect(() => {
+    const token = localStorage.getItem("apexToken");
+    if (!token) { setLoading(false); return; }
 
-  // Fake user database — in a real app this lives on a server
-  const fakeUsers = [
-    { name: "John Smith",  email: "john@email.com",  password: "password123" },
-    { name: "Jane Doe",    email: "jane@email.com",   password: "mypassword"  },
-  ];
+    fetch(`${API}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) setUser(data.user);
+        else localStorage.removeItem("apexToken"); // token expired or invalid
+      })
+      .catch(() => localStorage.removeItem("apexToken"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // LOGIN — check if email + password match a user
-  // Returns an error message if it fails, null if it succeeds
-  const login = (email, password) => {
-    const found = fakeUsers.find(
-      u => u.email === email && u.password === password
-    );
-    if (found) {
-      // Save user to state — strip out the password, never store that
-      setUser({ name: found.name, email: found.email });
-      return null; // null means no error
-    }
-    return "Incorrect email or password.";
+  // REGISTER — calls your backend, saves the token
+  const register = async (name, email, password) => {
+    const res  = await fetch(`${API}/auth/register`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ name, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Registration failed.");
+
+    localStorage.setItem("apexToken", data.token);
+    setUser(data.user);
+    return data;
   };
 
-  // REGISTER — check email isn't already taken, then add them
-  const register = (name, email, password) => {
-    const exists = fakeUsers.find(u => u.email === email);
-    if (exists) {
-      return "An account with this email already exists.";
-    }
-    // In a real app you'd send this to a server
-    // For now just log them in immediately after registering
-    setUser({ name, email });
-    return null;
+  // LOGIN — calls your backend, saves the token
+  const login = async (email, password) => {
+    const res  = await fetch(`${API}/auth/login`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, message: data.message };
+
+    localStorage.setItem("apexToken", data.token);
+    setUser(data.user);
+    return { success: true };
   };
 
-  // LOGOUT — wipe the user from state
-  const logout = () => setUser(null);
+  // LOGOUT — clears token and user state
+  const logout = () => {
+    localStorage.removeItem("apexToken");
+    setUser(null);
+  };
 
-  // isLoggedIn is derived — we calculate it, not store it separately
-  const isLoggedIn = user !== null;
+  // Helper — returns the token for use in API calls from other components
+  const getToken = () => localStorage.getItem("apexToken");
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, login, register, logout }}>
-      {children}
+    <AuthContext.Provider value={{ user, loading, register, login, logout, getToken }}>
+      {/* Don't render the app until we've checked the token — 
+          prevents a flash of "logged out" state on refresh */}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
 
-// Custom hook — same pattern as useCart()
 export function useAuth() {
   return useContext(AuthContext);
 }

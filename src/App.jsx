@@ -11,6 +11,7 @@ import RegisterPage from "./pages/RegisterPage";
 import AboutPage   from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import NotFound    from "./pages/NotFound";
+import AccountPage from "./pages/AccountPage";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/about"   element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="*"        element={<NotFound />} />  {/* the * catches everything else */}
+        <Route path="/account" element={<AccountPage />} />
       </Routes>
     </>
   );
