@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { formatNaira } from "../utils/currency";
 import Footer from "../components/Footer";
 
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function AccountPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile]   = useState(window.innerWidth < 768);
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [orders, setOrders]       = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [expandedOrder, setExpandedOrder] = useState(null);
 
   useEffect(() => {
-    // If not logged in, redirect to login
     if (!user) navigate("/login");
   }, [user, navigate]);
 
@@ -19,6 +25,20 @@ export default function AccountPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Fetch orders whenever the Orders tab is opened
+  useEffect(() => {
+    if (activeTab !== "Orders") return;
+    setOrdersLoading(true);
+
+    fetch(`${API}/orders`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(res => res.json())
+      .then(data => setOrders(data.orders || []))
+      .catch(err => console.error("Could not load orders:", err))
+      .finally(() => setOrdersLoading(false));
+  }, [activeTab]);
+
   if (!user) return null;
 
   const handleLogout = () => {
@@ -26,8 +46,16 @@ export default function AccountPage() {
     navigate("/");
   };
 
+  // Format the order date nicely
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-NG", {
+      day:   "numeric",
+      month: "long",
+      year:  "numeric",
+    });
+  };
+
   const tabs = ["Overview", "Orders", "Settings"];
-  const [activeTab, setActiveTab] = useState("Overview");
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#eae6e1", fontFamily: "'Georgia', serif" }}>
@@ -66,37 +94,16 @@ export default function AccountPage() {
       </div>
 
       {/* Tab content */}
-      <div style={{ flex: 1, padding: isMobile ? "32px 6%" : "48px 6%", maxWidth: "860px" }}>
+      <div style={{ flex: 1, padding: isMobile ? "32px 6%" : "48px 6%", maxWidth: "900px", width: "100%", boxSizing: "border-box" }}>
 
         {/* ── OVERVIEW ── */}
         {activeTab === "Overview" && (
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
-
             {[
-              {
-                icon: "📦", title: "My Orders",
-                desc: "Track, manage and view your order history.",
-                action: () => setActiveTab("Orders"),
-                btn: "View Orders",
-              },
-              {
-                icon: "❤️", title: "Shortlist",
-                desc: "Items you've saved for later.",
-                action: () => navigate("/shop"),
-                btn: "Browse Products",
-              },
-              {
-                icon: "📍", title: "Delivery Addresses",
-                desc: "Manage your saved delivery addresses.",
-                action: () => setActiveTab("Settings"),
-                btn: "Manage Addresses",
-              },
-              {
-                icon: "🔒", title: "Security",
-                desc: "Update your password and account settings.",
-                action: () => setActiveTab("Settings"),
-                btn: "Account Settings",
-              },
+              { icon: "📦", title: "My Orders",          desc: "Track and view your order history.",          btn: "View Orders",     action: () => setActiveTab("Orders") },
+              { icon: "❤️",  title: "Shortlist",          desc: "Items you have saved for later.",             btn: "Browse Products", action: () => navigate("/shop") },
+              { icon: "📍", title: "Delivery Addresses", desc: "Manage your saved delivery addresses.",        btn: "Manage",          action: () => setActiveTab("Settings") },
+              { icon: "🔒", title: "Security",           desc: "Update your password and account settings.",  btn: "Account Settings", action: () => setActiveTab("Settings") },
             ].map(card => (
               <div key={card.title} style={{ backgroundColor: "white", border: "1px solid #e8e4df", padding: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div style={{ fontSize: "1.8rem" }}>{card.icon}</div>
@@ -116,20 +123,148 @@ export default function AccountPage() {
         {/* ── ORDERS ── */}
         {activeTab === "Orders" && (
           <div>
-            <h2 style={{ margin: "0 0 24px", fontSize: "1.2rem", fontWeight: "900", color: "#1a1a1a" }}>Order History</h2>
-            {/* Right now orders only persist during a session since we have no backend.
-                When you build the backend in the next step, real orders will appear here. */}
-            <div style={{ backgroundColor: "white", border: "1px solid #e8e4df", padding: "48px", textAlign: "center" }}>
-              <p style={{ fontSize: "2.5rem", marginBottom: "12px" }}>📦</p>
-              <h3 style={{ margin: "0 0 8px", color: "#1a1a1a", fontSize: "1.1rem" }}>No orders yet</h3>
-              <p style={{ margin: "0 0 24px", color: "#7a6e68", fontFamily: "sans-serif", fontSize: "0.88rem" }}>
-                When you place an order, it will appear here. Order history will persist once the backend is connected.
-              </p>
-              <button onClick={() => navigate("/shop")}
-                style={{ padding: "12px 32px", backgroundColor: "#8b7355", color: "white", border: "none", cursor: "pointer", fontFamily: "sans-serif", fontWeight: "600" }}>
-                Start Shopping
-              </button>
-            </div>
+            <h2 style={{ margin: "0 0 24px", fontSize: "1.2rem", fontWeight: "900", color: "#1a1a1a" }}>
+              Order History
+            </h2>
+
+            {/* Loading state */}
+            {ordersLoading && (
+              <div style={{ textAlign: "center", padding: "48px", color: "#7a6e68", fontFamily: "sans-serif" }}>
+                Loading your orders...
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!ordersLoading && orders.length === 0 && (
+              <div style={{ backgroundColor: "white", border: "1px solid #e8e4df", padding: "48px", textAlign: "center" }}>
+                <p style={{ fontSize: "2.5rem", marginBottom: "12px" }}>📦</p>
+                <h3 style={{ margin: "0 0 8px", color: "#1a1a1a", fontSize: "1.1rem" }}>No orders yet</h3>
+                <p style={{ margin: "0 0 24px", color: "#7a6e68", fontFamily: "sans-serif", fontSize: "0.88rem" }}>
+                  When you place an order, it will appear here.
+                </p>
+                <button onClick={() => navigate("/shop")}
+                  style={{ padding: "12px 32px", backgroundColor: "#8b7355", color: "white", border: "none", cursor: "pointer", fontFamily: "sans-serif", fontWeight: "600" }}>
+                  Start Shopping
+                </button>
+              </div>
+            )}
+
+            {/* Orders list */}
+            {!ordersLoading && orders.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {orders.map(order => (
+                  <div key={order._id} style={{ backgroundColor: "white", border: "1px solid #e8e4df" }}>
+
+                    {/* Order summary row — always visible */}
+                    <div
+                      onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
+                      style={{
+                        padding: "20px 24px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        cursor: "pointer",
+                        flexWrap: "wrap",
+                        gap: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ fontWeight: "700", fontSize: "0.95rem", color: "#1a1a1a", fontFamily: "sans-serif" }}>
+                          {order.orderNumber}
+                        </span>
+                        <span style={{ fontSize: "0.8rem", color: "#7a6e68", fontFamily: "sans-serif" }}>
+                          {formatDate(order.createdAt)} · {order.items.length} {order.items.length === 1 ? "item" : "items"}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                        {/* Status badge */}
+                        <span style={{
+                          padding: "4px 12px",
+                          backgroundColor: order.status === "confirmed" ? "#e8f5e9" : "#fff3e0",
+                          color: order.status === "confirmed" ? "#2d6a2d" : "#e65100",
+                          fontSize: "0.75rem", fontWeight: "700",
+                          fontFamily: "sans-serif", borderRadius: "20px",
+                          textTransform: "uppercase", letterSpacing: "0.5px",
+                        }}>
+                          {order.status}
+                        </span>
+
+                        {/* Total */}
+                        <span style={{ fontWeight: "700", fontFamily: "sans-serif", color: "#8b7355", fontSize: "0.95rem" }}>
+                          {formatNaira(order.total)}
+                        </span>
+
+                        {/* Expand arrow */}
+                        <span style={{
+                          fontSize: "0.9rem", color: "#7a6e68",
+                          transform: expandedOrder === order._id ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s",
+                          display: "inline-block",
+                        }}>
+                          ▼
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Expanded order details */}
+                    {expandedOrder === order._id && (
+                      <div style={{ borderTop: "1px solid #e8e4df", padding: "20px 24px" }}>
+
+                        {/* Items */}
+                        <div style={{ marginBottom: "20px" }}>
+                          {order.items.map((item, i) => (
+                            <div key={i} style={{
+                              display: "flex", gap: "14px",
+                              alignItems: "center", padding: "10px 0",
+                              borderBottom: i < order.items.length - 1 ? "1px solid #f4f0eb" : "none",
+                            }}>
+                              <img src={item.image} alt={item.name}
+                                style={{ width: "56px", height: "48px", objectFit: "cover", flexShrink: 0 }} />
+                              <div style={{ flex: 1 }}>
+                                <p style={{ margin: "0 0 2px", fontSize: "0.88rem", fontWeight: "600", color: "#1a1a1a", fontFamily: "sans-serif" }}>
+                                  {item.name}
+                                </p>
+                                <p style={{ margin: 0, fontSize: "0.78rem", color: "#7a6e68", fontFamily: "sans-serif" }}>
+                                  Qty: {item.quantity}
+                                </p>
+                              </div>
+                              <span style={{ fontWeight: "600", fontFamily: "sans-serif", fontSize: "0.88rem", color: "#1a1a1a" }}>
+                                {formatNaira(item.price * item.quantity)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Delivery info */}
+                        <div style={{ display: "flex", gap: "40px", flexWrap: "wrap" }}>
+                          <div>
+                            <p style={{ margin: "0 0 4px", fontSize: "0.75rem", fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif", textTransform: "uppercase", letterSpacing: "1px" }}>
+                              Delivering to
+                            </p>
+                            <p style={{ margin: 0, fontSize: "0.85rem", color: "#5a5550", fontFamily: "sans-serif", lineHeight: 1.6 }}>
+                              {order.address}<br />
+                              {order.city}, {order.postcode}
+                            </p>
+                          </div>
+
+                          {order.paystackRef && (
+                            <div>
+                              <p style={{ margin: "0 0 4px", fontSize: "0.75rem", fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif", textTransform: "uppercase", letterSpacing: "1px" }}>
+                                Payment Reference
+                              </p>
+                              <p style={{ margin: 0, fontSize: "0.85rem", color: "#5a5550", fontFamily: "sans-serif", fontFamily: "monospace" }}>
+                                {order.paystackRef}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -153,16 +288,12 @@ export default function AccountPage() {
                   </div>
                 </div>
               ))}
-              <p style={{ margin: "8px 0 0", fontSize: "0.75rem", color: "#9a9088", fontFamily: "sans-serif" }}>
-                To update your details, you'll need to connect the backend — coming in the next step!
-              </p>
             </div>
 
-            {/* Logout */}
             <div style={{ backgroundColor: "white", border: "1px solid #e8e4df", padding: "28px" }}>
               <h3 style={{ margin: "0 0 8px", fontSize: "0.95rem", fontWeight: "700", color: "#1a1a1a" }}>Sign Out</h3>
               <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "#7a6e68", fontFamily: "sans-serif" }}>
-                You'll be signed out and returned to the homepage.
+                You will be signed out and returned to the homepage.
               </p>
               <button onClick={handleLogout}
                 style={{ padding: "11px 28px", backgroundColor: "#8b0000", color: "white", border: "none", cursor: "pointer", fontFamily: "sans-serif", fontWeight: "600", fontSize: "0.88rem" }}

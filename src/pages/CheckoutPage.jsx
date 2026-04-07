@@ -295,310 +295,221 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
 // ════════════════════════════════════════════════════════════════
 function StepReview({ formData, onBack, onPlaceOrder }) {
   const { cartItems, totalPrice } = useCart();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError]         = useState("");
 
-  // Delivery cost in Naira
-  const USD_TO_NGN = 1600;
-  const totalNaira = totalPrice * USD_TO_NGN;
-  const deliveryCost = formData.delivery === "express"
+  const USD_TO_NGN    = 1600;
+  const totalNaira    = totalPrice * USD_TO_NGN;
+  const deliveryCost  = formData.delivery === "express"
     ? 23900
     : totalNaira >= 199000 ? 0 : 15900;
   const grandTotalNaira = Math.round(totalNaira + deliveryCost);
 
-  // Card state
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry,     setExpiry]     = useState("");
-  const [cvv,        setCvv]        = useState("");
-  const [cardName,   setCardName]   = useState("");
-  const [cardError,  setCardError]  = useState("");
-  const [isLoading,  setIsLoading]  = useState(false);
-
-  // Live card brand detection as user types
-  const cardBrand = detectCardBrand(cardNumber);
-
-  // Live Luhn feedback — only show once 16 digits are entered
-  const rawDigits = cardNumber.replace(/\s/g, "");
-  const luhnValid = rawDigits.length >= 13 ? luhnCheck(rawDigits) : null;
-
-  // ── Paystack handler ────────────────────────────────────────────
-  // HOW PAYSTACK WORKS:
-  // 1. We import PaystackPop from the package you installed
-  // 2. We create a new transaction with your public key + amount in kobo
-  //    (Naira × 100 = kobo, e.g. ₦1,500 = 150,000 kobo)
-  // 3. Paystack opens its own secure popup — their servers handle the card
-  //    This means card details NEVER touch your code at all
-  // 4. On success, Paystack gives you a `reference` string
-  //    In production: send this reference to your backend to verify
-  //    Your backend calls Paystack's /verify endpoint using your SECRET key
-  const handlePaystackPayment = async () => {
-    setCardError("");
-
-    // Validate card fields before opening Paystack
-    if (!cardName.trim()) {
-      setCardError("Please enter the name on the card.");
-      return;
-    }
-    if (rawDigits.length < 16) {
-      setCardError("Please enter a valid 16-digit card number.");
-      return;
-    }
-    if (!luhnCheck(rawDigits)) {
-      setCardError("This card number is not valid. Please check and try again.");
-      return;
-    }
-    if (expiry.length < 5) {
-      setCardError("Please enter a valid expiry date (MM/YY).");
-      return;
-    }
-    if (cvv.length < 3) {
-      setCardError("Please enter a valid CVV (3 digits).");
-      return;
-    }
-
+  const handlePay = async () => {
+    setError("");
     setIsLoading(true);
 
     try {
-      // Dynamically import Paystack — this loads the library only when needed
-      // This is better than importing at the top because Paystack's script
-      // is large and we only need it at payment time
       const PaystackPop = (await import("@paystack/inline-js")).default;
       const paystack = new PaystackPop();
 
       paystack.newTransaction({
-        key:    PAYSTACK_PUBLIC_KEY,
-        email:  formData.email,
-        amount: grandTotalNaira * 100,        // Convert Naira → kobo (×100)
+        key:      PAYSTACK_PUBLIC_KEY,
+        email:    formData.email,
+        amount:   grandTotalNaira * 100, // kobo
         currency: "NGN",
-
-        // Transaction metadata — useful for your records
         metadata: {
           custom_fields: [
-            { display_name: "Customer Name",    variable_name: "customer_name",    value: `${formData.firstName} ${formData.lastName}` },
-            { display_name: "Delivery Address", variable_name: "delivery_address", value: `${formData.address}, ${formData.city}` },
+            { display_name: "Customer",  variable_name: "customer",  value: `${formData.firstName} ${formData.lastName}` },
+            { display_name: "Address",   variable_name: "address",   value: `${formData.address}, ${formData.city}` },
           ],
         },
 
-        // ── SUCCESS: Paystack closed after successful payment ───────
-        // `transaction` contains: reference, status, trans, trxref
-        // PRODUCTION TODO: Send transaction.reference to your backend
-        // Your backend calls: GET https://api.paystack.co/transaction/verify/{reference}
-        // with Authorization: Bearer YOUR_SECRET_KEY
-        // Only mark the order as paid after backend verification
         onSuccess: (transaction) => {
           setIsLoading(false);
-          console.log("✅ Payment successful. Reference:", transaction.reference);
-          // Pass the reference along so the confirmation page can show it
           onPlaceOrder(transaction.reference);
         },
 
-        // ── CANCEL: User closed the Paystack popup ─────────────────
         onCancel: () => {
           setIsLoading(false);
-          setCardError("Payment was cancelled. You can try again.");
+          setError("Payment was cancelled. Click the button below to try again.");
         },
       });
 
     } catch (err) {
       setIsLoading(false);
-      setCardError("Could not connect to payment provider. Please try again.");
+      setError("Could not connect to payment provider. Please try again.");
       console.error("Paystack error:", err);
     }
   };
 
   return (
-    <div style={{ maxWidth: "640px", margin: "0 auto", padding: "48px 20px" }}>
-      <h2 style={{ margin: "0 0 32px", fontSize: "1.5rem", fontWeight: "900", color: "#1a1a1a", fontFamily: "'Georgia', serif" }}>
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "48px 20px" }}>
+      <h2 style={{ margin: "0 0 8px", fontSize: "1.5rem", fontWeight: "900",
+        color: "#1a1a1a", fontFamily: "'Georgia', serif" }}>
         Review & Pay
       </h2>
+      <p style={{ margin: "0 0 28px", color: "#7a6e68",
+        fontSize: "0.88rem", fontFamily: "sans-serif" }}>
+        Check your order then choose how you want to pay.
+      </p>
 
-      {/* Order summary */}
-      <div style={{ backgroundColor: "#f9f6f2", padding: "20px", marginBottom: "28px", border: "1px solid #e8e4df" }}>
-        <h3 style={{ margin: "0 0 14px", fontSize: "0.95rem", fontWeight: "700", fontFamily: "sans-serif", color: "#1a1a1a" }}>
+      {/* ── Order summary ── */}
+      <div style={{ backgroundColor: "white", border: "1px solid #e8e4df",
+        padding: "20px", marginBottom: "20px" }}>
+        <h3 style={{ margin: "0 0 14px", fontSize: "0.95rem",
+          fontWeight: "700", fontFamily: "sans-serif", color: "#1a1a1a" }}>
           Order Summary
         </h3>
         {cartItems.map(item => (
-          <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e8e4df", fontSize: "0.85rem", fontFamily: "sans-serif", color: "#5a5550" }}>
-            <span>{item.name} × {item.quantity}</span>
-            <span>{formatNaira(item.price * item.quantity)}</span>
+          <div key={item.id} style={{
+            display: "flex", gap: "14px", alignItems: "center",
+            padding: "10px 0", borderBottom: "1px solid #f4f0eb",
+          }}>
+            <img src={item.image} alt={item.name}
+              style={{ width: "52px", height: "44px",
+                objectFit: "cover", flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: "0 0 2px", fontSize: "0.88rem",
+                fontWeight: "600", color: "#1a1a1a",
+                fontFamily: "sans-serif" }}>
+                {item.name}
+              </p>
+              <p style={{ margin: 0, fontSize: "0.78rem",
+                color: "#7a6e68", fontFamily: "sans-serif" }}>
+                Qty: {item.quantity}
+              </p>
+            </div>
+            <span style={{ fontWeight: "600", fontFamily: "sans-serif",
+              fontSize: "0.88rem", color: "#1a1a1a" }}>
+              {formatNaira(item.price * item.quantity)}
+            </span>
           </div>
         ))}
-        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "12px", fontSize: "0.85rem", fontFamily: "sans-serif", color: "#5a5550" }}>
-          <span>Delivery</span>
-          <span style={{ color: deliveryCost === 0 ? "#2d6a2d" : "#1a1a1a", fontWeight: deliveryCost === 0 ? "700" : "400" }}>
-            {deliveryCost === 0 ? "FREE" : formatNaira(deliveryCost / 1600)}
-          </span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "10px", fontWeight: "700", fontSize: "1rem", fontFamily: "sans-serif", color: "#1a1a1a" }}>
-          <span>Total</span>
-          <span style={{ color: "#8b7355" }}>₦{grandTotalNaira.toLocaleString("en-NG")}</span>
+
+        {/* Totals */}
+        <div style={{ paddingTop: "14px", display: "flex",
+          flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between",
+            fontSize: "0.85rem", fontFamily: "sans-serif", color: "#5a5550" }}>
+            <span>Delivery</span>
+            <span style={{ color: deliveryCost === 0 ? "#2d6a2d" : "#1a1a1a",
+              fontWeight: deliveryCost === 0 ? "700" : "400" }}>
+              {deliveryCost === 0 ? "FREE" : `₦${deliveryCost.toLocaleString("en-NG")}`}
+            </span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between",
+            fontWeight: "700", fontSize: "1.05rem",
+            fontFamily: "sans-serif", color: "#1a1a1a",
+            paddingTop: "8px", borderTop: "1px solid #e8e4df" }}>
+            <span>Total</span>
+            <span style={{ color: "#8b7355" }}>
+              ₦{grandTotalNaira.toLocaleString("en-NG")}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Delivery address summary */}
-      <div style={{ marginBottom: "28px" }}>
-        <h3 style={{ margin: "0 0 8px", fontSize: "0.95rem", fontWeight: "700", fontFamily: "sans-serif", color: "#1a1a1a" }}>
+      {/* ── Delivery address summary ── */}
+      <div style={{ backgroundColor: "white", border: "1px solid #e8e4df",
+        padding: "20px", marginBottom: "20px" }}>
+        <h3 style={{ margin: "0 0 10px", fontSize: "0.95rem",
+          fontWeight: "700", fontFamily: "sans-serif", color: "#1a1a1a" }}>
           Delivering to
         </h3>
-        <p style={{ margin: 0, fontSize: "0.88rem", color: "#5a5550", fontFamily: "sans-serif", lineHeight: 1.7 }}>
+        <p style={{ margin: 0, fontSize: "0.88rem",
+          color: "#5a5550", fontFamily: "sans-serif", lineHeight: 1.7 }}>
           {formData.firstName} {formData.lastName}<br />
           {formData.address}<br />
           {formData.city}, {formData.postcode}
         </p>
+        <button onClick={onBack}
+          style={{ marginTop: "10px", background: "none", border: "none",
+            color: "#8b7355", cursor: "pointer", fontSize: "0.82rem",
+            fontFamily: "sans-serif", textDecoration: "underline",
+            padding: 0 }}>
+          Edit delivery details
+        </button>
       </div>
 
-      {/* ── Card details ──────────────────────────────────────────── */}
-      {/* NOTE: In production, Paystack's popup handles card entry securely.
-          These fields are for display/validation only — we validate before
-          opening the Paystack popup, but Paystack re-collects card info
-          in their own secure iframe so your server never sees card numbers. */}
-      <h3 style={{ margin: "0 0 16px", fontSize: "0.95rem", fontWeight: "700", fontFamily: "sans-serif", color: "#1a1a1a" }}>
-        Card Details
-      </h3>
-
-      <div style={{ backgroundColor: "#f9f6f2", border: "1px solid #e8e4df", padding: "20px", marginBottom: "20px" }}>
-        <p style={{ margin: "0 0 14px", fontSize: "0.78rem", color: "#7a6e68", fontFamily: "sans-serif", lineHeight: 1.6 }}>
-          🔒 Your card details are processed securely by Paystack. We never store your card number.
-        </p>
-
-        {/* Name on card */}
-        <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "600", fontFamily: "sans-serif", color: "#1a1a1a", marginBottom: "6px" }}>
-            Name on card
-          </label>
-          <input
-            value={cardName}
-            onChange={e => setCardName(e.target.value)}
-            placeholder="John Smith"
-            style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1.5px solid #c8c2bb", fontSize: "0.9rem", fontFamily: "sans-serif", outline: "none" }}
-          />
-        </div>
-
-        {/* Card number with live Luhn feedback */}
-        <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "600", fontFamily: "sans-serif", color: "#1a1a1a", marginBottom: "6px" }}>
-            Card Number
-            {/* Show card brand once detected */}
-            {cardBrand && (
-              <span style={{ marginLeft: "8px", fontSize: "0.75rem", color: "#8b7355", fontWeight: "600" }}>
-                {cardBrand === "Visa" ? "💳 Visa" :
-                 cardBrand === "Mastercard" ? "💳 Mastercard" :
-                 cardBrand === "Verve" ? "💳 Verve" : `💳 ${cardBrand}`}
-              </span>
-            )}
-          </label>
-          <div style={{ position: "relative" }}>
-            <input
-              value={cardNumber}
-              onChange={e => setCardNumber(formatCardNumber(e.target.value))}
-              placeholder="0000 0000 0000 0000"
-              maxLength={19}
-              style={{
-                width: "100%", boxSizing: "border-box", padding: "12px 44px 12px 14px",
-                border: `1.5px solid ${
-                  luhnValid === null ? "#c8c2bb" :
-                  luhnValid ? "#2d6a2d" : "#8b0000"
-                }`,
-                fontSize: "0.9rem", fontFamily: "sans-serif",
-                letterSpacing: "1px", outline: "none",
-              }}
-            />
-            {/* Live tick/cross as the user types */}
-            {luhnValid !== null && (
-              <span style={{
-                position: "absolute", right: "12px", top: "50%",
-                transform: "translateY(-50%)",
-                fontSize: "1rem",
-                color: luhnValid ? "#2d6a2d" : "#8b0000",
-              }}>
-                {luhnValid ? "✓" : "✗"}
-              </span>
-            )}
-          </div>
-          {/* Explain invalid Luhn immediately — don't wait for submit */}
-          {luhnValid === false && (
-            <p style={{ margin: "4px 0 0", color: "#8b0000", fontSize: "0.75rem", fontFamily: "sans-serif" }}>
-              This card number doesn't look valid. Please double-check it.
-            </p>
-          )}
-        </div>
-
-        {/* Expiry + CVV side by side */}
-        <div style={{ display: "flex", gap: "16px" }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "600", fontFamily: "sans-serif", color: "#1a1a1a", marginBottom: "6px" }}>
-              Expiry Date
-            </label>
-            <input
-              value={expiry}
-              onChange={e => setExpiry(formatExpiry(e.target.value))}
-              placeholder="MM/YY"
-              maxLength={5}
-              style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1.5px solid #c8c2bb", fontSize: "0.9rem", fontFamily: "sans-serif", outline: "none" }}
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "600", fontFamily: "sans-serif", color: "#1a1a1a", marginBottom: "6px" }}>
-              CVV
-              <span style={{ marginLeft: "4px", fontSize: "0.72rem", color: "#7a6e68", fontWeight: "400" }}>(3 digits on back)</span>
-            </label>
-            <input
-              value={cvv}
-              onChange={e => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              placeholder="123"
-              maxLength={3}
-              type="password"
-              style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1.5px solid #c8c2bb", fontSize: "0.9rem", fontFamily: "sans-serif", outline: "none" }}
-            />
-          </div>
-        </div>
-
-        {/* Test card hint — remove this in production */}
-        <div style={{ marginTop: "14px", padding: "10px 14px", backgroundColor: "#fff8e1", border: "1px solid #ffe082", borderRadius: "3px" }}>
-          <p style={{ margin: 0, fontSize: "0.75rem", fontFamily: "sans-serif", color: "#5a4a00" }}>
-            <strong>🧪 Test mode:</strong> Use Paystack test card <code>4084084084084081</code>, expiry <code>01/99</code>, CVV <code>408</code>, PIN <code>0000</code>
+      {/* ── Payment options info ── */}
+      <div style={{ backgroundColor: "#f9f6f2", border: "1px solid #e8e4df",
+        padding: "16px 20px", marginBottom: "20px",
+        display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>💳</span>
+        <div>
+          <p style={{ margin: "0 0 4px", fontSize: "0.85rem",
+            fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif" }}>
+            Multiple payment options available
+          </p>
+          <p style={{ margin: 0, fontSize: "0.8rem",
+            color: "#7a6e68", fontFamily: "sans-serif", lineHeight: 1.6 }}>
+            Pay with card, bank transfer, USSD, or mobile money.
+            Your payment is secured by Paystack.
           </p>
         </div>
       </div>
 
-      {/* Error message */}
-      {cardError && (
-        <p style={{ margin: "0 0 16px", color: "#8b0000", fontSize: "0.85rem", fontFamily: "sans-serif", padding: "10px", backgroundColor: "#fff0f0", border: "1px solid #f5c0c0" }}>
-          ⚠ {cardError}
-        </p>
+      {/* ── Error message ── */}
+      {error && (
+        <div style={{ padding: "12px 16px", backgroundColor: "#fff0f0",
+          border: "1px solid #f5c0c0", marginBottom: "16px" }}>
+          <p style={{ margin: 0, color: "#8b0000",
+            fontSize: "0.85rem", fontFamily: "sans-serif" }}>
+            ⚠ {error}
+          </p>
+        </div>
       )}
 
-      {/* Buttons */}
-      <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+      {/* ── Buttons ── */}
+      <div style={{ display: "flex", gap: "12px" }}>
         <button onClick={onBack} disabled={isLoading}
-          style={{ flex: 1, padding: "14px", backgroundColor: "transparent", border: "2px solid #1a1a1a", fontSize: "0.88rem", fontWeight: "600", cursor: "pointer", fontFamily: "sans-serif", opacity: isLoading ? 0.5 : 1 }}>
+          style={{ flex: 1, padding: "14px", backgroundColor: "transparent",
+            border: "2px solid #1a1a1a", fontSize: "0.88rem",
+            fontWeight: "600", cursor: "pointer",
+            fontFamily: "sans-serif", opacity: isLoading ? 0.5 : 1 }}>
           ← Back
         </button>
         <button
-          onClick={handlePaystackPayment}
-          disabled={isLoading || luhnValid === false}
+          onClick={handlePay}
+          disabled={isLoading}
           style={{
             flex: 2, padding: "14px",
-            backgroundColor: isLoading ? "#aaa" : luhnValid === false ? "#ccc" : "#2d6a2d",
+            backgroundColor: isLoading ? "#aaa" : "#2d6a2d",
             color: "white", border: "none", fontSize: "0.95rem",
             fontWeight: "700", letterSpacing: "1px",
-            cursor: isLoading || luhnValid === false ? "not-allowed" : "pointer",
-            fontFamily: "sans-serif", transition: "background-color 0.2s",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+            cursor: isLoading ? "not-allowed" : "pointer",
+            fontFamily: "sans-serif",
+            display: "flex", alignItems: "center",
+            justifyContent: "center", gap: "8px",
+            transition: "background-color 0.2s",
           }}
-          onMouseEnter={e => { if (!isLoading && luhnValid !== false) e.currentTarget.style.backgroundColor = "#1e4e1e"; }}
-          onMouseLeave={e => { if (!isLoading && luhnValid !== false) e.currentTarget.style.backgroundColor = "#2d6a2d"; }}
+          onMouseEnter={e => { if (!isLoading) e.currentTarget.style.backgroundColor = "#1e4e1e"; }}
+          onMouseLeave={e => { if (!isLoading) e.currentTarget.style.backgroundColor = isLoading ? "#aaa" : "#2d6a2d"; }}
         >
           {isLoading ? (
             <>
-              <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>⟳</span>
-              Processing...
+              <span style={{ animation: "spin 1s linear infinite",
+                display: "inline-block" }}>⟳</span>
+              Opening payment...
             </>
           ) : (
-            <>🔒 PAY ₦{grandTotalNaira.toLocaleString("en-NG")}</>
+            <>🔒 Pay ₦{grandTotalNaira.toLocaleString("en-NG")}</>
           )}
         </button>
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <p style={{ margin: "14px 0 0", textAlign: "center",
+        fontSize: "0.75rem", color: "#9a9088", fontFamily: "sans-serif" }}>
+        🔒 Secured by Paystack · Card · Bank Transfer · USSD · Mobile Money
+      </p>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -647,23 +558,48 @@ export default function CheckoutPage() {
     );
   }
 
-  const handlePlaceOrder = (paystackReference) => {
-    const orderNumber = "AHF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-    navigate("/order-confirmed", {
-      state: {
-        orderNumber,
-        paystackReference,         // Store Paystack ref for display
-        email:     formData.email,
-        firstName: formData.firstName,
-        address:   formData.address,
-        city:      formData.city,
-        postcode:  formData.postcode,
-        delivery:  formData.delivery,
-        items:     cartItems,
-        total:     cartItems.reduce((s, i) => s + i.price * i.quantity, 0),
-      },
-    });
+  const handlePlaceOrder = async (paystackReference) => {
+  const orderNumber = "AHF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const token = getToken(); // from useAuth
+
+  const orderData = {
+    orderNumber,
+    paystackRef:  paystackReference,
+    email:        formData.email,
+    firstName:    formData.firstName,
+    address:      formData.address,
+    city:         formData.city,
+    postcode:     formData.postcode,
+    delivery:     formData.delivery,
+    items:        cartItems.map(item => ({
+      name:     item.name,
+      price:    item.price,
+      quantity: item.quantity,
+      image:    item.image,
+    })),
+    total: cartItems.reduce((s, i) => s + i.price * i.quantity, 0),
   };
+
+  // Save order to backend if user is logged in
+  // If guest, we skip saving and just show the confirmation
+  if (token) {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/orders`, {
+        method:  "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
+    } catch (err) {
+      console.error("Could not save order:", err);
+      // Don't block the user — order still shows on confirmation page
+    }
+  }
+
+  navigate("/order-confirmed", { state: orderData });
+};
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1", display: "flex", flexDirection: "column" }}>

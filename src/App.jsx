@@ -12,6 +12,7 @@ import AboutPage   from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import NotFound    from "./pages/NotFound";
 import AccountPage from "./pages/AccountPage";
+import Verify from "./pages/Verify";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/about"   element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="*"        element={<NotFound />} />  {/* the * catches everything else */}
+        <Route path="/verify/:token" element={<Verify />} />
         <Route path="/account" element={<AccountPage />} />
       </Routes>
     </>
