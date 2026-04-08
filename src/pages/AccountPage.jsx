@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { formatNaira } from "../utils/currency";
+import { formatNaira } from "../Utils/currency";
 import Footer from "../components/Footer";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
