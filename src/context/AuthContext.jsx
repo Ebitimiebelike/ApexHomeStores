@@ -1,19 +1,24 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_ROOT = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API = API_ROOT.endsWith("/api")
+  ? API_ROOT
+  : `${API_ROOT}/api`;
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(true); // NEW — checking token on load
+  const [loading, setLoading] = useState(false); // NEW — checking token on load
 
   // On app load, check if there's a saved token and validate it
   // This is how "stay logged in" works — the token is saved in localStorage,
   // and we verify it's still valid with the backend on every page load
   useEffect(() => {
     const token = localStorage.getItem("apexToken");
-    if (!token) { setLoading(false); return; }
+    if (!token) return;
 
+    setLoading(true);
     fetch(`${API}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -72,8 +77,4 @@ export function AuthProvider({ children }) {
       {!loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }
