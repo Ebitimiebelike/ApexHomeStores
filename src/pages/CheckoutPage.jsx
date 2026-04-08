@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { formatNaira } from "../utils/currency";
+import { formatNaira } from "../Utils/currency";
 import { useAuth } from "../context/AuthContext";
 import Footer from "../components/Footer";
 
@@ -72,7 +72,7 @@ function StepWelcome({ formData, setFormData, onNext }) {
   const [error, setError] = useState("");
 
   const handleContinue = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(formData.email)) {
       setError("Please enter a valid email address.");
       return;
@@ -122,10 +122,12 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
 
   const validate = () => {
     const e = {};
-    if (!formData.firstName.trim()) e.firstName = "First name is required.";
-    if (!formData.lastName.trim()) e.lastName = "Last name is required.";
-    if (!formData.address.trim()) e.address = "Address is required.";
-    if (!formData.city.trim()) e.city = "City is required.";
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!formData.firstName?.trim()) e.firstName = "First name is required.";
+    if (!formData.lastName?.trim()) e.lastName = "Last name is required.";
+    if (!emailRegex.test(formData.email)) e.email = "Invalid email format.";
+    
     return e;
   };
 
@@ -137,6 +139,14 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
       onNext();
     }
   };
+
+  return (
+    <div style={{ maxWidth: "500px", margin: "0 auto", padding: "48px 20px" }}>
+       {/* Your Form JSX here */}
+       <button onClick={handleNext}>REVIEW ORDER</button>
+    </div>
+  );
+}
 
   const inputStyle = (field) => ({
     width: "100%", boxSizing: "border-box", padding: "12px",
