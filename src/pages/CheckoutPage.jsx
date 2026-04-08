@@ -122,62 +122,85 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
 
   const validate = () => {
     const e = {};
+    // Updated regex to fix the "Invalid email format" error seen in your screenshot
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     if (!formData.firstName?.trim()) e.firstName = "First name is required.";
     if (!formData.lastName?.trim()) e.lastName = "Last name is required.";
-    if (!emailRegex.test(formData.email)) e.email = "Invalid email format.";
+    
+    if (!formData.email) {
+      e.email = "Email is required.";
+    } else if (!emailRegex.test(formData.email)) {
+      e.email = "Please enter a valid email address.";
+    }
+
+    if (!formData.address?.trim()) e.address = "Address is required.";
+    if (!formData.city?.trim()) e.city = "City is required.";
     
     return e;
   };
 
   const handleNext = () => {
-    const valErrors = validate();
-    if (Object.keys(valErrors).length > 0) {
-      setErrors(valErrors);
-    } else {
-      onNext();
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
+    setErrors({});
+    onNext();
   };
 
+  // The actual UI for Step 2
   return (
     <div style={{ maxWidth: "500px", margin: "0 auto", padding: "48px 20px" }}>
-       {/* Your Form JSX here */}
-       <button onClick={handleNext}>REVIEW ORDER</button>
-    </div>
-  );
-}
-
-  const inputStyle = (field) => ({
-    width: "100%", boxSizing: "border-box", padding: "12px",
-    border: `1.5px solid ${errors[field] ? "#8b0000" : "#c8c2bb"}`,
-    fontSize: "0.9rem", marginBottom: "12px", outline: "none"
-  });
-
-  return (
-    <div style={{ maxWidth: "500px", margin: "0 auto", padding: "48px 20px" }}>
-      <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900", marginBottom: "20px" }}>Delivery Details</h2>
+      <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900", marginBottom: "20px" }}>
+        Delivery Details
+      </h2>
       
-      <div style={{ display: "flex", gap: "10px" }}>
-        <input placeholder="First Name" value={formData.firstName} style={inputStyle('firstName')}
-          onChange={e => setFormData({...formData, firstName: e.target.value})} />
-        <input placeholder="Last Name" value={formData.lastName} style={inputStyle('lastName')}
-          onChange={e => setFormData({...formData, lastName: e.target.value})} />
+      <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+        <input 
+          placeholder="First Name" 
+          value={formData.firstName} 
+          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.firstName ? "#8b0000" : "#c8c2bb"}` }}
+          onChange={e => setFormData({...formData, firstName: e.target.value})} 
+        />
+        <input 
+          placeholder="Last Name" 
+          value={formData.lastName} 
+          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.lastName ? "#8b0000" : "#c8c2bb"}` }}
+          onChange={e => setFormData({...formData, lastName: e.target.value})} 
+        />
       </div>
 
-      <input placeholder="Address" value={formData.address} style={inputStyle('address')}
-        onChange={e => setFormData({...formData, address: e.target.value})} />
+      <input 
+        placeholder="Address" 
+        value={formData.address} 
+        style={{ width: "100%", padding: "12px", boxSizing: "border-box", marginBottom: "12px", border: `1.5px solid ${errors.address ? "#8b0000" : "#c8c2bb"}` }}
+        onChange={e => setFormData({...formData, address: e.target.value})} 
+      />
       
-      <div style={{ display: "flex", gap: "10px" }}>
-        <input placeholder="City" value={formData.city} style={inputStyle('city')}
-          onChange={e => setFormData({...formData, city: e.target.value})} />
-        <input placeholder="Postcode" value={formData.postcode} style={inputStyle('postcode')}
-          onChange={e => setFormData({...formData, postcode: e.target.value})} />
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <input 
+          placeholder="City" 
+          value={formData.city} 
+          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.city ? "#8b0000" : "#c8c2bb"}` }}
+          onChange={e => setFormData({...formData, city: e.target.value})} 
+        />
+        <input 
+          placeholder="Postcode" 
+          value={formData.postcode} 
+          style={{ flex: 1, padding: "12px", border: "#c8c2bb 1.5px solid" }}
+          onChange={e => setFormData({...formData, postcode: e.target.value})} 
+        />
       </div>
 
-      <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
-        <button onClick={onBack} style={{ flex: 1, padding: "14px", border: "2px solid #1a1a1a", background: "none", cursor: "pointer" }}>BACK</button>
-        <button onClick={handleNext} style={{ flex: 1, padding: "14px", backgroundColor: "#1a1a1a", color: "white", border: "none", cursor: "pointer" }}>REVIEW ORDER</button>
+      <div style={{ display: "flex", gap: "12px" }}>
+        <button onClick={onBack} style={{ flex: 1, padding: "14px", border: "2px solid #1a1a1a", background: "none", cursor: "pointer" }}>
+          BACK
+        </button>
+        <button onClick={handleNext} style={{ flex: 1, padding: "14px", backgroundColor: "#1a1a1a", color: "white", border: "none", cursor: "pointer" }}>
+          REVIEW ORDER
+        </button>
       </div>
     </div>
   );
