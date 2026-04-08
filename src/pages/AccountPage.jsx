@@ -253,7 +253,7 @@ export default function AccountPage() {
                               <p style={{ margin: "0 0 4px", fontSize: "0.75rem", fontWeight: "700", color: "#1a1a1a", fontFamily: "sans-serif", textTransform: "uppercase", letterSpacing: "1px" }}>
                                 Payment Reference
                               </p>
-                              <p style={{ margin: 0, fontSize: "0.85rem", color: "#5a5550", fontFamily: "sans-serif", fontFamily: "monospace" }}>
+                              <p style={{ margin: 0, fontSize: "0.85rem", color: "#5a5550", fontFamily: "sans-serif"}}>
                                 {order.paystackRef}
                               </p>
                             </div>

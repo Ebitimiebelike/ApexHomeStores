@@ -37,15 +37,28 @@ export default function RegisterPage() {
     return e;
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
   const newErrors = validate();
   if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
+  // Verify email is real before hitting the backend
+  try {
+    const res  = await fetch(
+      `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/verify-email?email=${encodeURIComponent(formData.email)}`
+    );
+    const data = await res.json();
+    if (!data.valid) {
+      setErrors({ email: data.reason || "Please enter a real email address." });
+      return;
+    }
+  } catch {
+    // If verification fails, continue anyway
+  }
+
   try {
     await register(formData.name, formData.email, formData.password);
-    navigate("/"); // success
+    navigate("/");
   } catch (err) {
-    // err.message comes from the server — e.g. "email already exists"
     setErrors({ email: err.message });
   }
 };

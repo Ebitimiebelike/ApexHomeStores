@@ -455,7 +455,7 @@ export default function Hero() {
 
             {/* Account */}
             <div
-              onClick={() => isLoggedIn ? logout() : navigate("/login")}
+              onClick={() => isLoggedIn ? navigate("/account") : navigate("/login")}
               onMouseEnter={() => setHoveredIcon("account")}
               onMouseLeave={() => setHoveredIcon(null)}
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}
