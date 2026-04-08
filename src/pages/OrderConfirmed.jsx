@@ -5,7 +5,7 @@ import { useCart } from "../context/CartContext";
 export default function OrderConfirmed() {
   const location  = useLocation();
   const navigate  = useNavigate();
-  const { cartItems, totalPrice, removeFromCart } = useCart();
+  const { removeFromCart } = useCart();
 
   // Read the order data that was passed from CheckoutPage
   // location.state holds everything we passed in navigate()
@@ -18,7 +18,7 @@ export default function OrderConfirmed() {
       // Remove every item from the cart
       order.items.forEach(item => removeFromCart(item.id));
     }
-  }, []); // The empty array [] means "run this once when the page first loads"
+  }, [order, removeFromCart]); // The empty array [] means "run this once when the page first loads"
 
   // Guard — if someone navigates directly to /order-confirmed with no data
   if (!order) {

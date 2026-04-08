@@ -8,20 +8,6 @@ import Footer from "../components/Footer";
 // ── Your Paystack public key ──────────────────────────────────────
 const PAYSTACK_PUBLIC_KEY = "pk_test_da9bcf205759a17389cdd47a91202dbe1f66fd39";
 
-// ── Luhn Algorithm & Helpers ──────────────────────────────────────
-function luhnCheck(cardNumber) {
-  const digits = cardNumber.replace(/\s/g, "");
-  if (digits.length < 13 || digits.length > 19) return false;
-  if (!/^\d+$/.test(digits)) return false;
-  let sum = 0; let isEven = false;
-  for (let i = digits.length - 1; i >= 0; i--) {
-    let digit = parseInt(digits[i], 10);
-    if (isEven) { digit *= 2; if (digit > 9) digit -= 9; }
-    sum += digit; isEven = !isEven;
-  }
-  return sum % 10 === 0;
-}
-
 function StepBar({ currentStep }) {
   const steps = ["Welcome", "Delivery", "Review & Pay"];
   return (
@@ -212,7 +198,6 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
 function StepReview({ formData, onBack, onPlaceOrder }) {
   const { cartItems, totalPrice } = useCart();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const USD_TO_NGN = 1600;
   const totalNaira = totalPrice * USD_TO_NGN;
@@ -220,7 +205,6 @@ function StepReview({ formData, onBack, onPlaceOrder }) {
   const grandTotalNaira = Math.round(totalNaira + deliveryCost);
 
   const handlePay = async () => {
-    setError("");
     setIsLoading(true);
     try {
       const PaystackPop = (await import("@paystack/inline-js")).default;
@@ -231,11 +215,10 @@ function StepReview({ formData, onBack, onPlaceOrder }) {
         amount: grandTotalNaira * 100,
         currency: "NGN",
         onSuccess: (t) => onPlaceOrder(t.reference),
-        onCancel: () => { setIsLoading(false); setError("Payment cancelled."); }
+        onCancel: () => { setIsLoading(false); }
       });
-    } catch (err) {
+    } catch (_err) {
       setIsLoading(false);
-      setError("Payment failed to initialize.");
     }
   };
 
@@ -268,7 +251,7 @@ function StepReview({ formData, onBack, onPlaceOrder }) {
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
-  const { user, getToken } = useAuth();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(user ? 2 : 1);
   const [formData, setFormData] = useState({
     email: user?.email || "",

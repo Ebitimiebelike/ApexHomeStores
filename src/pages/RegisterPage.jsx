@@ -26,6 +26,9 @@ export default function RegisterPage() {
     const e = {};
     // Standard Regex to fix the "Invalid email format" bug
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email)) {
+  e.email = "Please enter a valid email address.";
+}
 
     if (!formData.name.trim()) e.name = "Please enter your name.";
     

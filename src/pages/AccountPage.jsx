@@ -28,8 +28,8 @@ export default function AccountPage() {
   // Fetch orders whenever the Orders tab is opened
   useEffect(() => {
     if (activeTab !== "Orders") return;
-    setOrdersLoading(true);
 
+    setOrdersLoading(true);
     fetch(`${API}/orders`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
@@ -37,7 +37,7 @@ export default function AccountPage() {
       .then(data => setOrders(data.orders || []))
       .catch(err => console.error("Could not load orders:", err))
       .finally(() => setOrdersLoading(false));
-  }, [activeTab]);
+  }, [activeTab, getToken]);
 
   if (!user) return null;
 
