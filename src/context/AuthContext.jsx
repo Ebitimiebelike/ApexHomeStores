@@ -9,14 +9,14 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(false); // NEW — checking token on load
+ const [loading, setLoading] = useState(true); // NEW — checking token on load
 
   // On app load, check if there's a saved token and validate it
   // This is how "stay logged in" works — the token is saved in localStorage,
   // and we verify it's still valid with the backend on every page load
   useEffect(() => {
     const token = localStorage.getItem("apexToken");
-    if (!token) return;
+    if (!token) { setLoading(false); return; }
 
     setLoading(true);
     fetch(`${API}/auth/me`, {
@@ -33,18 +33,17 @@ export function AuthProvider({ children }) {
 
   // REGISTER — calls your backend, saves the token
   const register = async (name, email, password) => {
-    const res  = await fetch(`${API}/auth/register`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ name, email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Registration failed.");
+  const res = await fetch(`${API}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password }),
+  });
 
-    localStorage.setItem("apexToken", data.token);
-    setUser(data.user);
-    return data;
-  };
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Registration failed.");
+
+  return data; // { message: "Verification email sent..." }
+};
 
   // LOGIN — calls your backend, saves the token
   const login = async (email, password) => {

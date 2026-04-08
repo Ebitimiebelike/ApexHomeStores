@@ -48,27 +48,23 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+  const newErrors = validate();
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      // 1. Call the register function from AuthContext
-      await register(formData.name, formData.email, formData.password);
-      
-      // 2. If successful, go to home or dashboard
-      navigate("/");
-    } catch (err) {
-      // Handle errors from the backend (e.g., "Email already in use")
-      setErrors({ server: err.message || "Registration failed. Please try again." });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  try {
+    await register(formData.name, formData.email, formData.password);
+    navigate("/check-email"); // user must verify via the email link
+  } catch (err) {
+    setErrors({ server: err.message || "Registration failed. Please try again." });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const fields = [
     { label: "Full name", field: "name", type: "text", placeholder: "John Smith" },
