@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { formatNaira } from "../Utils/currency";
@@ -52,10 +52,11 @@ function StepBar({ currentStep }) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// STEP 1 — Welcome
+// STEP 1 — Welcome (Updated with API Verification Check)
 // ════════════════════════════════════════════════════════════════
 function StepWelcome({ formData, setFormData, onNext }) {
   const [error, setError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleContinue = async () => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -63,6 +64,26 @@ function StepWelcome({ formData, setFormData, onNext }) {
       setError("Please enter a valid email address.");
       return;
     }
+    
+    setIsVerifying(true);
+    setError("Verifying email...");
+
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const res = await fetch(`${baseUrl}/api/verify-email?email=${encodeURIComponent(formData.email)}`);
+      const data = await res.json();
+      
+      if (!data.valid) {
+        setError(data.reason || "Please enter a real email address.");
+        setIsVerifying(false);
+        return;
+      }
+    } catch (err) {
+      // If the verification API goes down, don't trap checkout actions
+      console.error("Verification unavailable:", err);
+    }
+
+    setIsVerifying(false);
     setError("");
     onNext();
   };
@@ -81,6 +102,7 @@ function StepWelcome({ formData, setFormData, onNext }) {
       </label>
       <input
         type="email"
+        disabled={isVerifying}
         value={formData.email}
         onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
         placeholder="you@example.com"
@@ -90,25 +112,42 @@ function StepWelcome({ formData, setFormData, onNext }) {
           fontSize: "0.9rem", fontFamily: "sans-serif", color: "#1a1a1a", outline: "none",
         }}
       />
-      {error && <p style={{ margin: "8px 0 0", color: "#8b0000", fontSize: "0.82rem", fontFamily: "sans-serif" }}>⚠ {error}</p>}
+      {error && (
+        <p style={{ 
+          margin: "8px 0 0", 
+          color: error.includes("Verifying") ? "#8b7355" : "#8b0000", 
+          fontSize: "0.82rem", 
+          fontFamily: "sans-serif" 
+        }}>
+          ⚠ {error}
+        </p>
+      )}
 
-      <button onClick={handleContinue}
-        style={{ width: "100%", padding: "15px", backgroundColor: "#8b7355", color: "white", border: "none", fontSize: "0.95rem", fontWeight: "700", letterSpacing: "1px", cursor: "pointer", marginTop: "24px", fontFamily: "sans-serif" }}>
-        CONTINUE
+      <button 
+        onClick={handleContinue}
+        disabled={isVerifying}
+        style={{ 
+          width: "100%", padding: "15px", 
+          backgroundColor: isVerifying ? "#a8998a" : "#8b7355", 
+          color: "white", border: "none", fontSize: "0.95rem", 
+          fontWeight: "700", letterSpacing: "1px", 
+          cursor: isVerifying ? "not-allowed" : "pointer", 
+          marginTop: "24px", fontFamily: "sans-serif" 
+        }}>
+        {isVerifying ? "VERIFYING..." : "CONTINUE"}
       </button>
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════════
-// STEP 2 — Delivery Details (FIXED)
+// STEP 2 — Delivery Details
 // ════════════════════════════════════════════════════════════════
-function StepDelivery({ formData, setFormData, onNext, onBack }) {
+function StepDelivery({ formData, setFormData, onNext, onBack, showBackButton }) {
   const [errors, setErrors] = useState({});
 
   const validate = () => {
     const e = {};
-    // Updated regex to fix the "Invalid email format" error seen in your screenshot
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     if (!formData.firstName?.trim()) e.firstName = "First name is required.";
@@ -136,7 +175,6 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
     onNext();
   };
 
-  // The actual UI for Step 2
   return (
     <div style={{ maxWidth: "500px", margin: "0 auto", padding: "48px 20px" }}>
       <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900", marginBottom: "20px" }}>
@@ -181,9 +219,11 @@ function StepDelivery({ formData, setFormData, onNext, onBack }) {
       </div>
 
       <div style={{ display: "flex", gap: "12px" }}>
-        <button onClick={onBack} style={{ flex: 1, padding: "14px", border: "2px solid #1a1a1a", background: "none", cursor: "pointer" }}>
-          BACK
-        </button>
+        {showBackButton && (
+          <button onClick={onBack} style={{ flex: 1, padding: "14px", border: "2px solid #1a1a1a", background: "none", cursor: "pointer" }}>
+            BACK
+          </button>
+        )}
         <button onClick={handleNext} style={{ flex: 1, padding: "14px", backgroundColor: "#1a1a1a", color: "white", border: "none", cursor: "pointer" }}>
           REVIEW ORDER
         </button>
@@ -252,10 +292,12 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
   const { user } = useAuth();
+  
+  // FIX 1: If user is already logged in, initialize at step 2 directly
   const [currentStep, setCurrentStep] = useState(user ? 2 : 1);
   const [formData, setFormData] = useState({
     email: user?.email || "",
-    guestOrAccount: "No (Continue as a guest)",
+    guestOrAccount: user ? "Account Holder" : "No (Continue as a guest)",
     firstName: "", lastName: "", address: "", city: "", postcode: "", delivery: "standard",
   });
 
@@ -272,9 +314,24 @@ export default function CheckoutPage() {
         <div>🔒 Secure Checkout</div>
       </div>
       <StepBar currentStep={currentStep} />
-      {currentStep === 1 && <StepWelcome formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(2)} />}
-      {currentStep === 2 && <StepDelivery formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />}
-      {currentStep === 3 && <StepReview formData={formData} onBack={() => setCurrentStep(2)} onPlaceOrder={handlePlaceOrder} />}
+      
+      {currentStep === 1 && (
+        <StepWelcome formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(2)} />
+      )}
+      
+      {currentStep === 2 && (
+        <StepDelivery 
+          formData={formData} 
+          setFormData={setFormData} 
+          onNext={() => setCurrentStep(3)} 
+          onBack={() => setCurrentStep(1)} 
+          showBackButton={!user} // Hide back button if already logged in so they can't get trapped in step 1
+        />
+      )}
+      
+      {currentStep === 3 && (
+        <StepReview formData={formData} onBack={() => setCurrentStep(2)} onPlaceOrder={handlePlaceOrder} />
+      )}
       <Footer />
     </div>
   );
