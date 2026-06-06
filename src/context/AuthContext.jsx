@@ -77,3 +77,8 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+
+// Custom hook — missing link to allow other components to use useAuth()
+export function useAuth() {
+  return useContext(AuthContext);
+}
