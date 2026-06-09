@@ -58,7 +58,8 @@ export default function RegisterPage() {
 
   try {
     await register(formData.name, formData.email, formData.password);
-    navigate("/check-email"); // user must verify via the email link
+    // To this — passes the email so the page can display it:
+navigate("/check-email", { state: { email: formData.email } }); // user must verify via the email link
   } catch (err) {
     setErrors({ server: err.message || "Registration failed. Please try again." });
   } finally {
