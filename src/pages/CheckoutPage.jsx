@@ -8,18 +8,28 @@ import Footer from "../components/Footer";
 // ── Your Paystack public key ──────────────────────────────────────
 const PAYSTACK_PUBLIC_KEY = "pk_test_da9bcf205759a17389cdd47a91202dbe1f66fd39";
 
-function StepBar({ currentStep }) {
+function StepBar({ currentStep, isMobile }) {
   const steps = ["Welcome", "Delivery", "Review & Pay"];
   return (
     <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "28px 6%", backgroundColor: "white",
-      borderBottom: "1px solid #e8e4df", flexWrap: "wrap", gap: "8px",
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      padding: isMobile ? "16px 4%" : "28px 6%", 
+      backgroundColor: "white",
+      borderBottom: "1px solid #e8e4df", 
+      flexWrap: "wrap", 
+      gap: isMobile ? "12px" : "8px",
+      boxSizing: "border-box"
     }}>
       {steps.map((step, index) => {
         const stepNum = index + 1;
         const isActive = stepNum === currentStep;
         const isDone = stepNum < currentStep;
+        
+        // On mobile, hide names of non-active steps to save extreme horizontal space
+        if (isMobile && !isActive && !isDone) return null;
+
         return (
           <div key={step} style={{ display: "flex", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -38,10 +48,10 @@ function StepBar({ currentStep }) {
                 fontWeight: isActive ? "700" : "400",
                 color: isActive ? "#1a1a1a" : "#aaa",
               }}>
-                {step}
+                {step} {isMobile && isDone && "✓"}
               </span>
             </div>
-            {index < steps.length - 1 && (
+            {index < steps.length - 1 && !isMobile && (
               <div style={{ width: "60px", borderTop: "2px dotted #ddd", margin: "0 12px" }} />
             )}
           </div>
@@ -52,9 +62,9 @@ function StepBar({ currentStep }) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// STEP 1 — Welcome (Updated with API Verification Check)
+// STEP 1 — Welcome
 // ════════════════════════════════════════════════════════════════
-function StepWelcome({ formData, setFormData, onNext }) {
+function StepWelcome({ formData, setFormData, onNext, isMobile }) {
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -79,7 +89,6 @@ function StepWelcome({ formData, setFormData, onNext }) {
         return;
       }
     } catch (err) {
-      // If the verification API goes down, don't trap checkout actions
       console.error("Verification unavailable:", err);
     }
 
@@ -89,8 +98,14 @@ function StepWelcome({ formData, setFormData, onNext }) {
   };
 
   return (
-    <div style={{ maxWidth: "480px", margin: "0 auto", padding: "48px 20px" }}>
-      <h2 style={{ margin: "0 0 6px", fontSize: "1.5rem", fontWeight: "900", color: "#1a1a1a", fontFamily: "'Georgia', serif" }}>
+    <div style={{ 
+      maxWidth: "480px", 
+      margin: "0 auto", 
+      padding: isMobile ? "32px 5%" : "48px 20px",
+      boxSizing: "border-box",
+      width: "100%"
+    }}>
+      <h2 style={{ margin: "0 0 6px", fontSize: isMobile ? "1.35rem" : "1.5rem", fontWeight: "900", color: "#1a1a1a", fontFamily: "'Georgia', serif" }}>
         Welcome to Secure Checkout
       </h2>
       <p style={{ margin: "0 0 32px", color: "#7a6e68", fontSize: "0.88rem", fontFamily: "sans-serif" }}>
@@ -143,7 +158,7 @@ function StepWelcome({ formData, setFormData, onNext }) {
 // ════════════════════════════════════════════════════════════════
 // STEP 2 — Delivery Details
 // ════════════════════════════════════════════════════════════════
-function StepDelivery({ formData, setFormData, onNext, onBack, showBackButton }) {
+function StepDelivery({ formData, setFormData, onNext, onBack, showBackButton, isMobile }) {
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -176,22 +191,28 @@ function StepDelivery({ formData, setFormData, onNext, onBack, showBackButton })
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "0 auto", padding: "48px 20px" }}>
-      <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900", marginBottom: "20px" }}>
+    <div style={{ 
+      maxWidth: "500px", 
+      margin: "0 auto", 
+      padding: isMobile ? "32px 5%" : "48px 20px",
+      boxSizing: "border-box",
+      width: "100%"
+    }}>
+      <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900", marginBottom: "20px", fontSize: isMobile ? "1.4rem" : "1.7rem" }}>
         Delivery Details
       </h2>
       
-      <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px", marginBottom: "12px" }}>
         <input 
           placeholder="First Name" 
           value={formData.firstName} 
-          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.firstName ? "#8b0000" : "#c8c2bb"}` }}
+          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.firstName ? "#8b0000" : "#c8c2bb"}`, boxSizing: "border-box", width: "100%" }}
           onChange={e => setFormData({...formData, firstName: e.target.value})} 
         />
         <input 
           placeholder="Last Name" 
           value={formData.lastName} 
-          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.lastName ? "#8b0000" : "#c8c2bb"}` }}
+          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.lastName ? "#8b0000" : "#c8c2bb"}`, boxSizing: "border-box", width: "100%" }}
           onChange={e => setFormData({...formData, lastName: e.target.value})} 
         />
       </div>
@@ -203,28 +224,28 @@ function StepDelivery({ formData, setFormData, onNext, onBack, showBackButton })
         onChange={e => setFormData({...formData, address: e.target.value})} 
       />
       
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px", marginBottom: "20px" }}>
         <input 
           placeholder="City" 
           value={formData.city} 
-          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.city ? "#8b0000" : "#c8c2bb"}` }}
+          style={{ flex: 1, padding: "12px", border: `1.5px solid ${errors.city ? "#8b0000" : "#c8c2bb"}`, boxSizing: "border-box", width: "100%" }}
           onChange={e => setFormData({...formData, city: e.target.value})} 
         />
         <input 
           placeholder="Postcode" 
           value={formData.postcode} 
-          style={{ flex: 1, padding: "12px", border: "#c8c2bb 1.5px solid" }}
+          style={{ flex: 1, padding: "12px", border: "#c8c2bb 1.5px solid", boxSizing: "border-box", width: "100%" }}
           onChange={e => setFormData({...formData, postcode: e.target.value})} 
         />
       </div>
 
-      <div style={{ display: "flex", gap: "12px" }}>
+      <div style={{ display: "flex", flexDirection: isMobile ? "column-reverse" : "row", gap: "12px" }}>
         {showBackButton && (
-          <button onClick={onBack} style={{ flex: 1, padding: "14px", border: "2px solid #1a1a1a", background: "none", cursor: "pointer" }}>
+          <button onClick={onBack} style={{ width: "100%", padding: "14px", border: "2px solid #1a1a1a", background: "none", cursor: "pointer", fontWeight: "700" }}>
             BACK
           </button>
         )}
-        <button onClick={handleNext} style={{ flex: 1, padding: "14px", backgroundColor: "#1a1a1a", color: "white", border: "none", cursor: "pointer" }}>
+        <button onClick={handleNext} style={{ width: "100%", padding: "14px", backgroundColor: "#1a1a1a", color: "white", border: "none", cursor: "pointer", fontWeight: "700" }}>
           REVIEW ORDER
         </button>
       </div>
@@ -235,7 +256,7 @@ function StepDelivery({ formData, setFormData, onNext, onBack, showBackButton })
 // ════════════════════════════════════════════════════════════════
 // STEP 3 — Review & Pay
 // ════════════════════════════════════════════════════════════════
-function StepReview({ formData, onBack, onPlaceOrder }) {
+function StepReview({ formData, onBack, onPlaceOrder, isMobile }) {
   const { cartItems, totalPrice } = useCart();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -263,16 +284,22 @@ function StepReview({ formData, onBack, onPlaceOrder }) {
   };
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "48px 20px" }}>
-       <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900" }}>Review & Pay</h2>
-       <div style={{ backgroundColor: "white", padding: "20px", border: "1px solid #e8e4df", marginTop: "20px" }}>
+    <div style={{ 
+      maxWidth: "600px", 
+      margin: "0 auto", 
+      padding: isMobile ? "32px 5%" : "48px 20px",
+      boxSizing: "border-box",
+      width: "100%"
+    }}>
+       <h2 style={{ fontFamily: "'Georgia', serif", fontWeight: "900", fontSize: isMobile ? "1.4rem" : "1.7rem" }}>Review & Pay</h2>
+       <div style={{ backgroundColor: "white", padding: "16px", border: "1px solid #e8e4df", marginTop: "20px", boxSizing: "border-box" }}>
           {cartItems.map(item => (
-            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f4f0eb" }}>
-              <span>{item.name} (x{item.quantity})</span>
-              <span>{formatNaira(item.price * item.quantity)}</span>
+            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f4f0eb", fontSize: "0.9rem" }}>
+              <span style={{ paddingRight: "8px" }}>{item.name} (x{item.quantity})</span>
+              <span style={{ flexShrink: 0 }}>{formatNaira(item.price * item.quantity)}</span>
             </div>
           ))}
-          <div style={{ marginTop: "20px", fontWeight: "700", fontSize: "1.2rem", display: "flex", justifyContent: "space-between" }}>
+          <div style={{ marginTop: "20px", fontWeight: "700", fontSize: isMobile ? "1.1rem" : "1.2rem", display: "flex", justifyContent: "space-between" }}>
             <span>Total</span>
             <span>₦{grandTotalNaira.toLocaleString("en-NG")}</span>
           </div>
@@ -280,7 +307,9 @@ function StepReview({ formData, onBack, onPlaceOrder }) {
        <button onClick={handlePay} disabled={isLoading} style={{ width: "100%", padding: "16px", backgroundColor: "#2d6a2d", color: "white", border: "none", marginTop: "20px", fontWeight: "700", cursor: "pointer" }}>
          {isLoading ? "PROCESSING..." : `PAY ₦${grandTotalNaira.toLocaleString("en-NG")}`}
        </button>
-       <button onClick={onBack} style={{ width: "100%", background: "none", border: "none", marginTop: "10px", cursor: "pointer", textDecoration: "underline" }}>Back to Delivery</button>
+       <button onClick={onBack} style={{ width: "100%", background: "none", border: "none", marginTop: "16px", cursor: "pointer", textDecoration: "underline", padding: "8px 0" }}>
+         Back to Delivery
+       </button>
     </div>
   );
 }
@@ -293,7 +322,14 @@ export default function CheckoutPage() {
   const { cartItems } = useCart();
   const { user } = useAuth();
   
-  // FIX 1: If user is already logged in, initialize at step 2 directly
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const [currentStep, setCurrentStep] = useState(user ? 2 : 1);
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -308,15 +344,24 @@ export default function CheckoutPage() {
   if (cartItems.length === 0) return <div style={{ textAlign: "center", padding: "100px" }}>Basket is empty.</div>;
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1" }}>
-      <div style={{ backgroundColor: "white", padding: "16px 6%", display: "flex", justifyContent: "space-between", borderBottom: "1px solid #e8e4df" }}>
-        <div style={{ fontWeight: "900", fontFamily: "'Georgia', serif" }}>Apex Home</div>
-        <div>🔒 Secure Checkout</div>
+    <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1", overflowX: "hidden" }}>
+      <div style={{ 
+        backgroundColor: "white", 
+        padding: isMobile ? "16px 4%" : "16px 6%", 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        borderBottom: "1px solid #e8e4df",
+        boxSizing: "border-box"
+      }}>
+        <div style={{ fontWeight: "900", fontFamily: "'Georgia', serif", fontSize: isMobile ? "1.1rem" : "1.2rem" }}>Apex Home</div>
+        <div style={{ fontSize: isMobile ? "0.85rem" : "0.95rem" }}>🔒 Secure</div>
       </div>
-      <StepBar currentStep={currentStep} />
+      
+      <StepBar currentStep={currentStep} isMobile={isMobile} />
       
       {currentStep === 1 && (
-        <StepWelcome formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(2)} />
+        <StepWelcome formData={formData} setFormData={setFormData} onNext={() => setCurrentStep(2)} isMobile={isMobile} />
       )}
       
       {currentStep === 2 && (
@@ -325,12 +370,13 @@ export default function CheckoutPage() {
           setFormData={setFormData} 
           onNext={() => setCurrentStep(3)} 
           onBack={() => setCurrentStep(1)} 
-          showBackButton={!user} // Hide back button if already logged in so they can't get trapped in step 1
+          showBackButton={!user} 
+          isMobile={isMobile}
         />
       )}
       
       {currentStep === 3 && (
-        <StepReview formData={formData} onBack={() => setCurrentStep(2)} onPlaceOrder={handlePlaceOrder} />
+        <StepReview formData={formData} onBack={() => setCurrentStep(2)} onPlaceOrder={handlePlaceOrder} isMobile={isMobile} />
       )}
       <Footer />
     </div>

@@ -1,67 +1,74 @@
-import { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Step 1: Create the noticeboard
-// This is just an empty board for now — we'll fill it via the Provider
 const CartContext = createContext();
 
-// Step 2: Create the Provider — this is the hallway noticeboard
-// Every component wrapped inside this can access the cart
 export function CartProvider({ children }) {
+  // ── STEP 1: READ FROM LOCALSTORAGE ON LOAD ──────────────────────
+  // Instead of starting with an empty array [], we check if a cart already exists in the phone's browser cache.
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem("apex_cart_items");
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error("Error reading cart from localStorage:", error);
+      return []; // Fallback to empty array if it fails
+    }
+  });
 
-  // The actual cart data lives here — an array of items
-  // Each item will look like: { id, name, price, image, quantity }
-  const [cartItems, setCartItems] = useState([]);
+  // ── STEP 2: WRITE TO LOCALSTORAGE ON EVERY CHANGE ───────────────
+  // This side effect triggers automatically whenever an item is added, updated, or removed.
+  useEffect(() => {
+    localStorage.setItem("apex_cart_items", JSON.stringify(cartItems));
+  }, [cartItems]);
 
-  // ADD to cart
-  // If the product is already in the cart, just increase its quantity
-  // If it's new, add it as a fresh entry
-  const addToCart = (product, quantity = 1) => {
-    setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id);
+  // ── YOUR EXISTING FUNCTIONS ─────────────────────────────────────
+  // Keep your exact functions below! Do not change how they work.
+  const addToCart = (product) => {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
       if (existing) {
-        // Map over items and update only the matching one
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      // Product not in cart yet — add it
-      return [...prev, { ...product, quantity }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
-  // REMOVE one item completely from cart
-  const removeFromCart = (productId) => {
-    setCartItems(prev => prev.filter(item => item.id !== productId));
+  const removeFromCart = (id) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // UPDATE quantity of a specific item
-  const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity < 1) return; // never go below 1
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
-      )
+  const updateQuantity = (id, amount) => {
+    if (amount < 1) return;
+    setCartItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: amount } : item))
     );
   };
 
-  // Total number of items (used for the basket badge in navbar)
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const clearCart = () => {
+    setCartItems([]);
+  };
 
-  // Total price
+  // ── CALCULATIONS ────────────────────────────────────────────────
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    // Step 3: Share all of this with every component inside
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, totalItems, totalPrice }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        totalItems,
+        totalPrice,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
 }
 
-// Custom hook — instead of writing useContext(CartContext) everywhere,
-// you just write useCart(). Clean and reusable.
-export function useCart() {
-  return useContext(CartContext);
-}
+export const useCart = () => useContext(CartContext);

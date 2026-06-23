@@ -13,7 +13,7 @@ import ContactPage from "./pages/ContactPage";
 import NotFound    from "./pages/NotFound";
 import AccountPage from "./pages/AccountPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
-import CheckEmailPage from "./pages/CheckEmailPage";
+import CheckmailPage from "./pages/CheckmailPage";
 
 function App() {
   return (
@@ -32,7 +32,7 @@ function App() {
         <Route path="*"        element={<NotFound />} />  {/* the * catches everything else */}
         <Route path="/account" element={<AccountPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/check-email" element={<CheckEmailPage />} />
+        <Route path="/check-email" element={<CheckmailPage />} />
       </Routes>
     </>
   );

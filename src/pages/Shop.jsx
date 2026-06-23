@@ -8,7 +8,6 @@ import Footer from "../components/Footer";
 
 const ALL_CATEGORIES = ["All", ...new Set(products.map(p => p.category))];
 
-// Real images per category for the banner
 const CATEGORY_BANNERS = {
   "All":            { img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1400&q=80", label: "All Furniture" },
   "Sofas & Chairs": { img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1400&q=80", label: "Sofas & Chairs" },
@@ -28,23 +27,17 @@ const SORT_OPTIONS = [
 export default function Shop() {
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  // useSearchParams reads the ?category= part of the URL
-  // It works just like useState but synced to the URL
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCategory = searchParams.get("category") || "All";
 
   const [activeCategory, setActiveCategory] = useState(urlCategory);
   const [sortBy, setSortBy] = useState("default");
 
-  // When the URL changes (e.g. user clicks navbar category),
-  // update the active filter to match
   useEffect(() => {
     setActiveCategory(urlCategory);
   }, [urlCategory]);
 
   const handleCategoryClick = (cat) => {
-    setActiveCategory(cat);
-    // Update the URL so the back button works correctly
     if (cat === "All") {
       setSearchParams({});
     } else {
@@ -52,17 +45,15 @@ export default function Shop() {
     }
   };
 
-  // Filter first
   const filtered = activeCategory === "All"
     ? products
     : products.filter(p => p.category === activeCategory);
 
-  // Then sort
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "price-asc")  return a.price - b.price;
     if (sortBy === "price-desc") return b.price - a.price;
     if (sortBy === "rating")     return b.rating - a.rating;
-    return 0; // default — keep original order
+    return 0;
   });
 
   const banner = CATEGORY_BANNERS[activeCategory] || CATEGORY_BANNERS["All"];
@@ -70,57 +61,82 @@ export default function Shop() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1", position: "relative" }}>
       
-      {/* --- FLOATING BASKET ICON --- */}
-      <button 
-        onClick={() => navigate("/cart")}
+      {/* --- INJECTING PERIODIC DANGLE KEYFRAMES --- */}
+      <style>{`
+        @keyframes periodicDangle {
+          0%, 76%, 100% { transform: rotate(0deg); }
+          11% { transform: rotate(15deg); }
+          22% { transform: rotate(-12deg); }
+          33% { transform: rotate(10deg); }
+          44% { transform: rotate(-8deg); }
+          55% { transform: rotate(4deg); }
+          66% { transform: rotate(-2deg); }
+        }
+
+        .shop-basket-idle-dangle {
+          animation: periodicDangle 5s infinite ease-in-out;
+        }
+      `}</style>
+
+      {/* --- FLOATING BASKET WRAPPER CONTEXT CONTAINER --- */}
+      <div 
+        className="shop-basket-idle-dangle"
         style={{
           position: "fixed",
           bottom: "30px",
           right: "30px",
-          width: "60px",
-          height: "60px",
-          borderRadius: "50%",
-          backgroundColor: "#1a1a1a",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
           zIndex: 1000,
-          boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
+          transformOrigin: "top center" // Ensures it hinges naturally from the top handle area
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
-        
-        {/* The Badge */}
+        {/* --- DYNAMIC BRAND COUNT BADGE --- */}
         {totalItems > 0 && (
           <div style={{
             position: "absolute",
-            top: "0",
-            right: "0",
-            backgroundColor: "#8b0000",
+            top: "-4px",
+            right: "-4px",
+            backgroundColor: "#8b7355", // Switched from dark red to match your brand's signature brown palette
             color: "white",
             borderRadius: "50%",
-            width: "20px",
-            height: "20px",
+            width: "22px",
+            height: "22px",
             fontSize: "0.75rem",
             fontWeight: "700",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            border: "2px solid white"
+            boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+            zIndex: 1001,
+            fontFamily: "sans-serif"
           }}>
             {totalItems}
           </div>
         )}
-      </button>
 
-      {/* ── CATEGORY BANNER IMAGE ── */}
+        {/* Floating Button Action Trigger */}
+        <button 
+          onClick={() => navigate("/cart")}
+          style={{
+            width: "60px",
+            height: "60px",
+            borderRadius: "50%",
+            backgroundColor: "#1a1a1a",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </button>
+      </div>
 
       {/* ── CATEGORY BANNER IMAGE ── */}
       <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
@@ -221,7 +237,6 @@ export default function Shop() {
           ))}
         </div>
       ) : (
-        // Empty state
         <div style={{ padding: "80px 6%", textAlign: "center" }}>
           <p style={{ fontSize: "2rem", marginBottom: "12px" }}>🛋️</p>
           <h2 style={{ margin: "0 0 8px", color: "#1a1a1a", fontSize: "1.2rem" }}>
