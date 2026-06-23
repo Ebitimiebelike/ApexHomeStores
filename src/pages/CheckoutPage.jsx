@@ -8,6 +8,8 @@ import Footer from "../components/Footer";
 // ── Your Paystack public key ──────────────────────────────────────
 const PAYSTACK_PUBLIC_KEY = "pk_test_da9bcf205759a17389cdd47a91202dbe1f66fd39";
 
+const ABSTRACT_API_KEY = "778f7b0f503e4e1eba6a97bb7f59c550";
+
 function StepBar({ currentStep, isMobile }) {
   const steps = ["Welcome", "Delivery", "Review & Pay"];
   return (
@@ -69,32 +71,62 @@ function StepWelcome({ formData, setFormData, onNext, isMobile }) {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleContinue = async () => {
+    const cleanEmail = formData.email.trim().toLowerCase();
+
+    // 1. Quick Initial Syntax Check (Save API requests if format is completely broken)
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Please enter a valid email address.");
+    if (!emailRegex.test(cleanEmail)) {
+      setError("Please enter a valid email address structure.");
       return;
     }
-    
-    setIsVerifying(true);
-    setError("Verifying email...");
 
+    setIsVerifying(true);
+    setError("Verifying email legitimacy...");
+
+    // 2. AbstractAPI Call
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const res = await fetch(`${baseUrl}/api/verify-email?email=${encodeURIComponent(formData.email)}`);
-      const data = await res.json();
+      const response = await fetch(
+        `https://emailvalidation.abstractapi.com/v1/?api_key=${ABSTRACT_API_KEY}&email=${encodeURIComponent(cleanEmail)}`
+      );
       
-      if (!data.valid) {
-        setError(data.reason || "Please enter a real email address.");
+      if (!response.ok) {
+        throw new Error("AbstractAPI request failed");
+      }
+
+      const data = await response.json();
+
+      // AbstractAPI breaks down validation metrics:
+      // data.is_valid_format.value -> Syntax check
+      // data.deliverability -> "DELIVERABLE", "UNDELIVERABLE", or "UNKNOWN"
+      // data.is_disposable_email.value -> Checks for burner/temp emails
+      
+      if (data.deliverability === "UNDELIVERABLE") {
+        setError("This email domain doesn't exist or cannot receive mail.");
         setIsVerifying(false);
         return;
       }
-    } catch (err) {
-      console.error("Verification unavailable:", err);
-    }
 
-    setIsVerifying(false);
-    setError("");
-    onNext();
+      if (data.is_disposable_email.value) {
+        setError("Temporary or disposable emails are not permitted.");
+        setIsVerifying(false);
+        return;
+      }
+
+      // Update parent state with clean email format
+      setFormData(prev => ({ ...prev, email: cleanEmail }));
+      setError("");
+      onNext(); // Proceed to delivery details step
+
+    } catch (err) {
+      console.error("Email verification API fallback:", err);
+      // Safety Net: If AbstractAPI reaches its free tier monthly limit or goes down, 
+      // don't lock your actual buyers out of checkout. Let them pass on standard regex success.
+      setFormData(prev => ({ ...prev, email: cleanEmail }));
+      setError("");
+      onNext();
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -119,11 +151,14 @@ function StepWelcome({ formData, setFormData, onNext, isMobile }) {
         type="email"
         disabled={isVerifying}
         value={formData.email}
-        onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+        onChange={e => {
+          setError(""); // Clear error when user changes input values
+          setFormData(prev => ({ ...prev, email: e.target.value }));
+        }}
         placeholder="you@example.com"
         style={{
           width: "100%", boxSizing: "border-box", padding: "13px 16px",
-          border: `1.5px solid ${error ? "#8b0000" : "#c8c2bb"}`,
+          border: `1.5px solid ${error && !error.includes("Verifying") ? "#8b0000" : "#c8c2bb"}`,
           fontSize: "0.9rem", fontFamily: "sans-serif", color: "#1a1a1a", outline: "none",
         }}
       />
@@ -132,7 +167,8 @@ function StepWelcome({ formData, setFormData, onNext, isMobile }) {
           margin: "8px 0 0", 
           color: error.includes("Verifying") ? "#8b7355" : "#8b0000", 
           fontSize: "0.82rem", 
-          fontFamily: "sans-serif" 
+          fontFamily: "sans-serif",
+          fontWeight: "600"
         }}>
           ⚠ {error}
         </p>
