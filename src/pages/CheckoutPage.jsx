@@ -84,7 +84,7 @@ function StepWelcome({ formData, setFormData, onNext, isMobile }) {
     // 2. Call YOUR OWN Backend Proxy Route instead of Abstract API directly
     try {
       // Replace with your local URL or your Render backend domain URL
-      const BACKEND_URL = "https://apex-backend-your-link.onrender.com"; 
+      const BACKEND_URL = "https://apex-backend-adrb.onrender.com"; 
       
       const response = await fetch(
         `${BACKEND_URL}/api/validate-checkout-email?email=${encodeURIComponent(cleanEmail)}`
