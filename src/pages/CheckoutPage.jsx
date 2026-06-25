@@ -8,8 +8,6 @@ import Footer from "../components/Footer";
 // ── Your Paystack public key ──────────────────────────────────────
 const PAYSTACK_PUBLIC_KEY = "pk_test_da9bcf205759a17389cdd47a91202dbe1f66fd39";
 
-const ABSTRACT_API_KEY = "778f7b0f503e4e1eba6a97bb7f59c550";
-
 function StepBar({ currentStep, isMobile }) {
   const steps = ["Welcome", "Delivery", "Review & Pay"];
   return (
@@ -73,7 +71,7 @@ function StepWelcome({ formData, setFormData, onNext, isMobile }) {
   const handleContinue = async () => {
     const cleanEmail = formData.email.trim().toLowerCase();
 
-    // 1. Quick Initial Syntax Check (Save API requests if format is completely broken)
+    // 1. Quick Initial Syntax Check
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(cleanEmail)) {
       setError("Please enter a valid email address structure.");
@@ -83,44 +81,36 @@ function StepWelcome({ formData, setFormData, onNext, isMobile }) {
     setIsVerifying(true);
     setError("Verifying email legitimacy...");
 
-    // 2. AbstractAPI Call
+    // 2. Call YOUR OWN Backend Proxy Route instead of Abstract API directly
     try {
+      // Replace with your local URL or your Render backend domain URL
+      const BACKEND_URL = "https://apex-backend-your-link.onrender.com"; 
+      
       const response = await fetch(
-        `https://emailvalidation.abstractapi.com/v1/?api_key=${ABSTRACT_API_KEY}&email=${encodeURIComponent(cleanEmail)}`
+        `${BACKEND_URL}/api/validate-checkout-email?email=${encodeURIComponent(cleanEmail)}`
       );
       
       if (!response.ok) {
-        throw new Error("AbstractAPI request failed");
+        throw new Error("Backend validation endpoint failed");
       }
 
       const data = await response.json();
 
-      // AbstractAPI breaks down validation metrics:
-      // data.is_valid_format.value -> Syntax check
-      // data.deliverability -> "DELIVERABLE", "UNDELIVERABLE", or "UNKNOWN"
-      // data.is_disposable_email.value -> Checks for burner/temp emails
-      
-      if (data.deliverability === "UNDELIVERABLE") {
-        setError("This email domain doesn't exist or cannot receive mail.");
+      // Your backend returns { valid: true/false, reason: "..." }
+      if (!data.valid) {
+        setError(data.reason);
         setIsVerifying(false);
         return;
       }
 
-      if (data.is_disposable_email.value) {
-        setError("Temporary or disposable emails are not permitted.");
-        setIsVerifying(false);
-        return;
-      }
-
-      // Update parent state with clean email format
+      // If valid, proceed smoothly
       setFormData(prev => ({ ...prev, email: cleanEmail }));
       setError("");
-      onNext(); // Proceed to delivery details step
+      onNext(); 
 
     } catch (err) {
-      console.error("Email verification API fallback:", err);
-      // Safety Net: If AbstractAPI reaches its free tier monthly limit or goes down, 
-      // don't lock your actual buyers out of checkout. Let them pass on standard regex success.
+      console.error("Email verification fallback:", err);
+      // Safety net: let them pass if your backend route fails
       setFormData(prev => ({ ...prev, email: cleanEmail }));
       setError("");
       onNext();
