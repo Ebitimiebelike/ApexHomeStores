@@ -1,6 +1,3 @@
-Here is the complete, raw markdown text for your `README.md` file. You can copy everything inside the block below and paste it directly into your file:
-
-```markdown
 # Apex Home Furnishings
 
 An immersive, full-stack e-commerce platform built to provide a seamless online furniture shopping experience[cite: 1]. This project covers everything from complex state management to multi-step checkouts and secure routing[cite: 1].
