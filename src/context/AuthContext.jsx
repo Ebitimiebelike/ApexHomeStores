@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 
 const API_ROOT = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -8,27 +9,33 @@ const API = API_ROOT.endsWith("/api")
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null);
- const [loading, setLoading] = useState(true); // NEW — checking token on load
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem("apexToken")));
 
   // On app load, check if there's a saved token and validate it
   // This is how "stay logged in" works — the token is saved in localStorage,
   // and we verify it's still valid with the backend on every page load
   useEffect(() => {
     const token = localStorage.getItem("apexToken");
-    if (!token) { setLoading(false); return; }
+    if (!token) return;
 
-    setLoading(true);
-    fetch(`${API}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then(data => {
+    const fetchUser = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
         if (data.user) setUser(data.user);
         else localStorage.removeItem("apexToken"); // token expired or invalid
-      })
-      .catch(() => localStorage.removeItem("apexToken"))
-      .finally(() => setLoading(false));
+      } catch {
+        localStorage.removeItem("apexToken");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
   }, []);
 
   // REGISTER — calls your backend, saves the token

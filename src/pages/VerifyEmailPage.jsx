@@ -14,16 +14,16 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const token  = params.get("token");
+    const verifyEmail = async () => {
+      const params = new URLSearchParams(location.search);
+      const token  = params.get("token");
 
-    if (!token) {
-      setStatus("error");
-      setMessage("Verification link is invalid. Please register again.");
-      return;
-    }
+      if (!token) {
+        setStatus("error");
+        setMessage("Verification link is invalid. Please register again.");
+        return;
+      }
 
-    const verify = async () => {
       try {
         // ── IMPORTANT: your backend uses POST /api/auth/verify-email ──
         // Your previous VerifyEmailPage was using GET which is why it failed.
@@ -54,7 +54,7 @@ export default function VerifyEmailPage() {
       }
     };
 
-    verify();
+    verifyEmail();
   }, [location.search, navigate]);
 
   return (

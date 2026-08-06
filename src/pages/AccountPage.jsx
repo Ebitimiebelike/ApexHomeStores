@@ -29,14 +29,22 @@ export default function AccountPage() {
   useEffect(() => {
     if (activeTab !== "Orders") return;
 
-    setOrdersLoading(true);
-    fetch(`${API}/orders`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
-      .then(res => res.json())
-      .then(data => setOrders(data.orders || []))
-      .catch(err => console.error("Could not load orders:", err))
-      .finally(() => setOrdersLoading(false));
+    const fetchOrders = async () => {
+      setOrdersLoading(true);
+      try {
+        const res = await fetch(`${API}/orders`, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } catch (err) {
+        console.error("Could not load orders:", err);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
   }, [activeTab, getToken]);
 
   if (!user) return null;

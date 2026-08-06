@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
@@ -31,12 +31,8 @@ export default function Shop() {
   const urlCategory = searchParams.get("category") || "All";
   const urlSearch   = searchParams.get("search")   || "";
 
-  const [activeCategory, setActiveCategory] = useState(urlCategory);
+  const activeCategory = urlCategory;
   const [sortBy, setSortBy] = useState("default");
-
-  useEffect(() => {
-    setActiveCategory(urlCategory);
-  }, [urlCategory, urlSearch]);
 
   const handleCategoryClick = (cat) => {
     if (cat === "All") {

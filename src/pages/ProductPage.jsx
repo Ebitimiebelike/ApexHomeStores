@@ -20,9 +20,6 @@ export default function ProductPage() {
   // State to trigger the instant click-based dangle animation
   const [isClickedDangling, setIsClickedDangling] = useState(false);
 
-  // Calculate total number of items currently inside the cart array
-  const totalCartItems = totalItems;
-
   // Responsiveness Listener
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1000);

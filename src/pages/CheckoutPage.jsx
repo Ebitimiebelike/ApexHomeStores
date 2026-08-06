@@ -304,7 +304,7 @@ function StepReview({ formData, onBack, onPlaceOrder, isMobile }) {
         onSuccess: (t) => onPlaceOrder(t.reference),
         onCancel: () => { setIsLoading(false); }
       });
-    } catch (_err) {
+    } catch {
       setIsLoading(false);
     }
   };
