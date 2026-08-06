@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
+import Hero from "../components/Hero";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import Footer from "../components/Footer";
@@ -68,6 +69,7 @@ export default function Shop() {
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1", position: "relative" }}>
+      <Hero />
       
       {/* --- INJECTING PERIODIC DANGLE KEYFRAMES --- */}
       <style>{`

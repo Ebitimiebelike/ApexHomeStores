@@ -27,6 +27,11 @@ export default function ProductPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Ensure we start at the top of the product page when navigating here
+  useEffect(() => {
+    try { window.scrollTo({ top: 0, left: 0 }); } catch (e) { /* ignore */ }
+  }, [id]);
+
   if (!product) {
     return (
       <div style={{ padding: "80px 6%", textAlign: "center", fontFamily: "sans-serif" }}>
