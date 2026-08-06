@@ -5,7 +5,7 @@ import { useCart } from "../context/CartContext";
 export default function OrderConfirmed() {
   const location  = useLocation();
   const navigate  = useNavigate();
-  const { removeFromCart } = useCart();
+  const { clearCart } = useCart();
 
   // Read the order data that was passed from CheckoutPage
   // location.state holds everything we passed in navigate()
@@ -15,10 +15,9 @@ export default function OrderConfirmed() {
   // useEffect runs AFTER the page renders — perfect for side effects like this
   useEffect(() => {
     if (order) {
-      // Remove every item from the cart
-      order.items.forEach(item => removeFromCart(item.id));
+      clearCart();
     }
-  }, [order, removeFromCart]); // The empty array [] means "run this once when the page first loads"
+  }, [order, clearCart]);
 
   // Guard — if someone navigates directly to /order-confirmed with no data
   if (!order) {

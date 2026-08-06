@@ -29,13 +29,14 @@ export default function Shop() {
   const { totalItems } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCategory = searchParams.get("category") || "All";
+  const urlSearch   = searchParams.get("search")   || "";
 
   const [activeCategory, setActiveCategory] = useState(urlCategory);
   const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
     setActiveCategory(urlCategory);
-  }, [urlCategory]);
+  }, [urlCategory, urlSearch]);
 
   const handleCategoryClick = (cat) => {
     if (cat === "All") {
@@ -45,9 +46,20 @@ export default function Shop() {
     }
   };
 
-  const filtered = activeCategory === "All"
-    ? products
-    : products.filter(p => p.category === activeCategory);
+  const filtered = (() => {
+    let results = activeCategory === "All"
+      ? products
+      : products.filter(p => p.category === activeCategory);
+
+    if (urlSearch.trim()) {
+      const term = urlSearch.toLowerCase();
+      results = results.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        p.category.toLowerCase().includes(term)
+      );
+    }
+    return results;
+  })();
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "price-asc")  return a.price - b.price;
@@ -214,6 +226,9 @@ export default function Shop() {
       <div style={{ padding: "20px 6% 0",
         fontSize: "0.85rem", color: "#7a6e68", fontFamily: "sans-serif" }}>
         Showing <strong style={{ color: "#1a1a1a" }}>{sorted.length}</strong> products
+        {urlSearch.trim() && (
+          <span> for <strong style={{ color: "#1a1a1a" }}>&ldquo;{urlSearch}&rdquo;</strong></span>
+        )}
         {activeCategory !== "All" && (
           <span> in <strong style={{ color: "#1a1a1a" }}>{activeCategory}</strong>
             <button onClick={() => handleCategoryClick("All")}
