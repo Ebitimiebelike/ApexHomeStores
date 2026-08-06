@@ -29,7 +29,11 @@ export default function ProductPage() {
 
   // Ensure we start at the top of the product page when navigating here
   useEffect(() => {
-    try { window.scrollTo({ top: 0, left: 0 }); } catch (e) { /* ignore */ }
+    try {
+      window.scrollTo({ top: 0, left: 0 });
+    } catch {
+      // Ignore browser scroll issues
+    }
   }, [id]);
 
   if (!product) {
