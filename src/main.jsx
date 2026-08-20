@@ -2,17 +2,17 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
-import { CartProvider } from "./context/CartContext"
-import { AuthProvider } from "./context/AuthContext"; 
-import { Analytics } from '@vercel/analytics/react';
+import { CartProvider } from "./context/CartContext";
+import { ClerkProvider } from "@clerk/clerk-react";
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <AuthProvider>
-  <CartProvider> 
-    <App />
-    <Analytics />
-    </CartProvider>
-    </AuthProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </ClerkProvider>
   </BrowserRouter>
 );

@@ -14,6 +14,7 @@ import NotFound    from "./pages/NotFound";
 import AccountPage from "./pages/AccountPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import CheckmailPage from "./pages/CheckmailPage";
+import { SignIn, SignUp } from "@clerk/clerk-react";
 
 function App() {
   return (
@@ -25,8 +26,8 @@ function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-confirmed" element={<OrderConfirmed />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login/*"    element={<LoginPage />} />
+        <Route path="/register/*" element={<RegisterPage />} />
         <Route path="/about"   element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="*"        element={<NotFound />} />  {/* the * catches everything else */}
