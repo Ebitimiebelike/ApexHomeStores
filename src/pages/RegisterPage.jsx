@@ -16,14 +16,14 @@ export default function RegisterPage() {
         afterSignUpUrl="/"
         appearance={{
           variables: {
-            colorPrimary: "#8b7355",
+            colorPrimary:    "#8b7355",
             colorBackground: "#ffffff",
-            fontFamily: "Georgia, serif",
+            fontFamily:      "Georgia, serif",
           },
           elements: {
-            card: { boxShadow: "none", border: "1px solid #e8e4df" },
+            card:        { boxShadow: "none", border: "1px solid #e8e4df" },
             headerTitle: { fontFamily: "Georgia, serif" },
-          }
+          },
         }}
       />
       <Footer />
