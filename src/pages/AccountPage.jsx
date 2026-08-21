@@ -31,14 +31,32 @@ export default function AccountPage() {
 
     const fetchOrders = async () => {
       setOrdersLoading(true);
+
       try {
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error("No authentication token available.");
+        }
+
         const res = await fetch(`${API}/orders`, {
-          headers: { Authorization: `Bearer ${getToken()}` },
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
+
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Could not load orders.");
+        }
+
         setOrders(data.orders || []);
       } catch (err) {
         console.error("Could not load orders:", err);
+        setOrders([]);
       } finally {
         setOrdersLoading(false);
       }

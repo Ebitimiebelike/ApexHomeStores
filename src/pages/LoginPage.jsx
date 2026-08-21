@@ -7,7 +7,7 @@ export default function LoginPage() {
       minHeight: "100vh", backgroundColor: "#eae6e1",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      padding: "40px 20px",
+      padding: "60px 20px 80px",
     }}>
       <SignIn
         routing="path"

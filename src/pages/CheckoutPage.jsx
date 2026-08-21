@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 
 // ── Your Paystack public key ──────────────────────────────────────
 const PAYSTACK_PUBLIC_KEY = "pk_test_da9bcf205759a17389cdd47a91202dbe1f66fd39";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 function StepBar({ currentStep, isMobile }) {
   const steps = ["Welcome", "Delivery", "Review & Pay"];
@@ -301,8 +302,13 @@ function StepReview({ formData, onBack, onPlaceOrder, isMobile }) {
         email: formData.email,
         amount: grandTotalNaira * 100,
         currency: "NGN",
-        onSuccess: (t) => onPlaceOrder(t.reference),
-        onCancel: () => { setIsLoading(false); }
+        onSuccess: async (t) => {
+          await onPlaceOrder(t.reference);
+          setIsLoading(false);
+        },
+        onCancel: () => {
+          setIsLoading(false);
+        }
       });
     } catch {
       setIsLoading(false);
@@ -346,7 +352,7 @@ function StepReview({ formData, onBack, onPlaceOrder, isMobile }) {
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -363,8 +369,85 @@ export default function CheckoutPage() {
     firstName: "", lastName: "", address: "", city: "", postcode: "", delivery: "standard",
   });
 
-  const handlePlaceOrder = (ref) => {
-    navigate("/order-confirmed", { state: { ...formData, ref, items: cartItems } });
+  const handlePlaceOrder = async (ref) => {
+    try {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error("Authentication token unavailable.");
+      }
+
+      const USD_TO_NGN = 1600;
+      const totalNaira = cartItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      ) * USD_TO_NGN;
+
+      const deliveryCost =
+        formData.delivery === "express"
+          ? 23900
+          : totalNaira >= 199000
+            ? 0
+            : 15900;
+
+      const grandTotalNaira = Math.round(totalNaira + deliveryCost);
+
+      const orderNumber =
+        "AHF-" +
+        Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      const orderItems = cartItems.map((item) => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+      }));
+
+      const response = await fetch(`${API}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orderNumber,
+          items: orderItems,
+          total: grandTotalNaira,
+          delivery: formData.delivery,
+          address: formData.address,
+          city: formData.city,
+          postcode: formData.postcode,
+          paystackRef: ref,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not save order.");
+      }
+
+      navigate("/order-confirmed", {
+        state: {
+          ...formData,
+          ref,
+          orderNumber,
+          items: cartItems,
+          total: grandTotalNaira,
+        },
+      });
+    } catch (err) {
+      console.error("Order creation error:", err);
+      alert(
+        err.message ||
+          "Payment succeeded, but we could not save your order. Please contact support."
+      );
+    }
   };
 
   if (cartItems.length === 0) return <div style={{ textAlign: "center", padding: "100px" }}>Basket is empty.</div>;
