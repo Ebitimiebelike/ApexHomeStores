@@ -19,6 +19,8 @@ export default function AccountPage() {
     loading: authLoading,
   } = useAuth();
 
+  const userId = user?.id;
+
   const navigate = useNavigate();
 
   const [isMobile, setIsMobile] =
@@ -90,7 +92,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (
       activeTab !== "Orders" ||
-      !user ||
+      !userId ||
       authLoading
     ) {
       return;
@@ -179,7 +181,7 @@ export default function AccountPage() {
     };
   }, [
     activeTab,
-    user,
+    userId,
     authLoading,
     getToken,
   ]);
