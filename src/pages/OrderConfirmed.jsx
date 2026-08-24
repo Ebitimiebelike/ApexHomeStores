@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useCart } from "../context/CartContext";
+import { formatNaira } from "../Utils/currency";
 
 export default function OrderConfirmed() {
   const location  = useLocation();
@@ -40,9 +41,11 @@ export default function OrderConfirmed() {
     );
   }
 
-  const deliveryCost = order.delivery === "express" ? 14.99
-    : order.total >= 199 ? 0 : 19.99;
-  const grandTotal = (order.total + deliveryCost).toFixed(2);
+const USD_TO_NGN = 1600;
+const totalNaira = order.total * USD_TO_NGN;
+const deliveryCostNaira = order.delivery === "express" ? 23900
+  : totalNaira >= 199000 ? 0 : 15900;
+const grandTotalNaira = Math.round(totalNaira + deliveryCostNaira);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#eae6e1",
@@ -146,7 +149,7 @@ export default function OrderConfirmed() {
               </div>
               <span style={{ fontWeight: "700", fontFamily: "sans-serif",
                 color: "#1a1a1a", fontSize: "0.9rem" }}>
-                ${item.price * item.quantity}
+                {formatNaira(item.price * item.quantity)}
               </span>
             </div>
           ))}
@@ -156,9 +159,9 @@ export default function OrderConfirmed() {
             fontSize: "0.85rem", fontFamily: "sans-serif",
             color: "#5a5550", marginBottom: "8px" }}>
             <span>Delivery</span>
-            <span style={{ color: deliveryCost === 0 ? "#2d6a2d" : "#1a1a1a",
-              fontWeight: deliveryCost === 0 ? "700" : "400" }}>
-              {deliveryCost === 0 ? "FREE" : `$${deliveryCost}`}
+            <span style={{ color: deliveryCostNaira === 0 ? "#2d6a2d" : "#1a1a1a",
+              fontWeight: deliveryCostNaira === 0 ? "700" : "400" }}>
+              {deliveryCostNaira === 0 ? "FREE" : `₦${deliveryCostNaira.toLocaleString("en-NG")}`}
             </span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between",
@@ -166,7 +169,7 @@ export default function OrderConfirmed() {
             fontFamily: "sans-serif", color: "#1a1a1a",
             paddingTop: "10px", borderTop: "1px solid #e8e4df" }}>
             <span>Total Paid</span>
-            <span>${grandTotal}</span>
+            <span>₦{grandTotalNaira.toLocaleString("en-NG")}</span>
           </div>
         </div>
 

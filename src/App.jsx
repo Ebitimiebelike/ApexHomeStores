@@ -47,10 +47,10 @@ function App() {
         <Route path="/register/*" element={<RegisterPage />} />
         <Route path="/about"   element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="*"        element={<NotFound />} />  {/* the * catches everything else */}
-        <Route path="/account" element={<AccountPage />} />
+        <Route path="/account"      element={<AccountPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/check-email" element={<CheckmailPage />} />
+        <Route path="/check-email"  element={<CheckmailPage />} />
+        <Route path="*"             element={<NotFound />} />
       </Routes>
     </>
   );
