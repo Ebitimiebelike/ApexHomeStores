@@ -50,14 +50,18 @@ export default function Footer() {
       color: "#d4cfc9",
       fontFamily: "sans-serif",
       marginTop: "auto",
+      width: "100%",
+      boxSizing: "border-box",
     }}>
 
       {/* ── Top section ── */}
       <div style={{
         maxWidth: "1200px", margin: "0 auto",
         padding: "56px 6% 40px",
+        width: "100%",
+        boxSizing: "border-box",
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))",
         gap: "40px",
       }}>
 

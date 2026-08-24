@@ -27,6 +27,7 @@ export default function LoginPage() {
           },
         }}
       />
+      
       <Footer />
     </div>
   );
