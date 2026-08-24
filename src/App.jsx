@@ -14,6 +14,9 @@ import NotFound    from "./pages/NotFound";
 import AccountPage from "./pages/AccountPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import CheckmailPage from "./pages/CheckmailPage";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
+import ReturnsPolicyPage from "./pages/ReturnsPolicyPage";
+import FaqPage from "./pages/FaqPage";
 import { SignIn, SignUp } from "@clerk/clerk-react";
 
 function App() {
@@ -25,6 +28,9 @@ function App() {
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-confirmed" element={<OrderConfirmed />} />
+        <Route path="/orders" element={<OrderTrackingPage />} />
+        <Route path="/returns" element={<ReturnsPolicyPage />} />
+        <Route path="/faqs" element={<FaqPage />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login/*"    element={<LoginPage />} />
         <Route path="/register/*" element={<RegisterPage />} />

@@ -88,8 +88,7 @@ export default function ContactPage() {
         <div style={{ flex: isMobile ? "unset" : "0 0 260px", width: isMobile ? "100%" : "auto" }}>
           <h2 style={{ margin: "0 0 20px", fontSize: "1.1rem", fontWeight: "900", color: "#1a1a1a" }}>Contact details</h2>
           {[
-            { icon: "📧", label: "Email",   value: "hello@apexhome.com" },
-            { icon: "📞", label: "Phone",   value: "0345 646 1701" },
+            { icon: "📧", label: "Email",   value: "apexhomesfurnitures@gmail.com" },
             { icon: "🕐", label: "Hours",   value: "Mon–Sat, 9am–6pm" },
             { icon: "📍", label: "Address", value: "12 Furnishing Lane\nLagos, Nigeria" },
           ].map(item => (
