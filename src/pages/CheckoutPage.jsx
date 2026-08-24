@@ -11,9 +11,10 @@ const PAYSTACK_PUBLIC_KEY =
   import.meta.env.VITE_PAYSTACK_PUBLIC_KEY ||
   "pk_test_da9bcf205759a17389cdd47a91202dbe1f66fd39";
 
-const API =
+const API = `${(
   import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+  "http://localhost:5000/api"
+).replace(/\/$/, "")}/api`.replace("/api/api", "/api");
 
 const USD_TO_NGN = 1600;
 

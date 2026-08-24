@@ -6,9 +6,10 @@ import { formatNaira } from "../Utils/currency";
 
 import Footer from "../components/Footer";
 
-const API =
+const API = `${(
   import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+  "http://localhost:5000/api"
+).replace(/\/$/, "")}/api`.replace("/api/api", "/api");
 
 export default function AccountPage() {
   const {

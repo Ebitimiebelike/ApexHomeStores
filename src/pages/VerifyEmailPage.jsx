@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 
-const API_ROOT = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_ROOT = `${(
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
+).replace(/\/$/, "")}/api`.replace("/api/api", "/api");
 const API = API_ROOT.endsWith("/api") ? API_ROOT : `${API_ROOT}/api`;
 
 export default function VerifyEmailPage() {
