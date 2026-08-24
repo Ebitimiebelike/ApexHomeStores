@@ -139,13 +139,15 @@ export default function AccountPage() {
         }
 
         if (!cancelled) {
-          setOrders(
-            Array.isArray(
-              data.orders
-            )
-              ? data.orders
-              : []
-          );
+          const loadedOrders = Array.isArray(data.orders)
+            ? data.orders.map((order, index) => ({
+                ...order,
+                _id: order._id || `${order.orderNumber || "order"}-${index}`,
+                items: Array.isArray(order.items) ? order.items : [],
+              }))
+            : [];
+
+          setOrders(loadedOrders);
         }
       } catch (error) {
         console.error(
@@ -812,15 +814,8 @@ export default function AccountPage() {
                                   order.createdAt
                                 )}{" "}
                                 ·{" "}
-                                {
-                                  order
-                                    .items
-                                    ?.length
-                                }{" "}
-                                {order
-                                  .items
-                                  ?.length ===
-                                1
+                                {order.items.length}{" "}
+                                {order.items.length === 1
                                   ? "item"
                                   : "items"}
                               </span>
