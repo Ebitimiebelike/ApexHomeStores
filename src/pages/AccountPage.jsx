@@ -11,6 +11,26 @@ const API = `${(
   "http://localhost:5000/api"
 ).replace(/\/$/, "")}/api`.replace("/api/api", "/api");
 
+const settingsInput = {
+  width: "100%",
+  padding: "11px 14px",
+  border: "1.5px solid #e8e4df",
+  backgroundColor: "#f9f6f2",
+  fontFamily: "sans-serif",
+  boxSizing: "border-box",
+};
+
+const settingsButton = {
+  padding: "10px 16px",
+  backgroundColor: "transparent",
+  border: "2px solid #8b7355",
+  color: "#8b7355",
+  cursor: "pointer",
+  fontFamily: "sans-serif",
+  fontWeight: "600",
+  justifySelf: "start",
+};
+
 export default function AccountPage() {
   const {
     user,
@@ -42,6 +62,18 @@ export default function AccountPage() {
 
   const [expandedOrder, setExpandedOrder] =
     useState(null);
+
+  const [savedAddresses, setSavedAddresses] =
+    useState(() => {
+      try {
+        return JSON.parse(localStorage.getItem("apex_delivery_addresses")) || [];
+      } catch {
+        return [];
+      }
+    });
+
+  const [addressForm, setAddressForm] =
+    useState({ label: "", address: "", city: "", postcode: "" });
 
   // ----------------------------------------------------------
   // Responsive
@@ -84,6 +116,10 @@ export default function AccountPage() {
     user,
     navigate,
   ]);
+
+  useEffect(() => {
+    localStorage.setItem("apex_delivery_addresses", JSON.stringify(savedAddresses));
+  }, [savedAddresses]);
 
   // ----------------------------------------------------------
   // Fetch orders
@@ -1159,6 +1195,69 @@ export default function AccountPage() {
                   "16px",
               }}
             >
+              <h3
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: "0.95rem",
+                }}
+              >
+                Delivery Addresses
+              </h3>
+
+              {savedAddresses.map((savedAddress) => (
+                <div
+                  key={savedAddress.id}
+                  style={{
+                    border: "1px solid #e8e4df",
+                    padding: "12px",
+                    marginBottom: "10px",
+                    fontFamily: "sans-serif",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  <strong>{savedAddress.label || "Saved address"}</strong>
+                  <div>{savedAddress.address}</div>
+                  <div>{savedAddress.city}, {savedAddress.postcode}</div>
+                  <button
+                    type="button"
+                    onClick={() => setSavedAddresses((addresses) => addresses.filter((item) => item.id !== savedAddress.id))}
+                    style={{ ...settingsButton, color: "#8b0000", borderColor: "#8b0000", marginTop: "8px" }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!addressForm.address.trim() || !addressForm.city.trim()) return;
+                  setSavedAddresses((addresses) => [
+                    ...addresses,
+                    { ...addressForm, id: `${Date.now()}` },
+                  ]);
+                  setAddressForm({ label: "", address: "", city: "", postcode: "" });
+                }}
+                style={{ display: "grid", gap: "10px", marginBottom: "28px" }}
+              >
+                {[
+                  ["label", "Label (e.g. Home)", false],
+                  ["address", "Street address", true],
+                  ["city", "City", true],
+                  ["postcode", "Postcode", false],
+                ].map(([field, placeholder, required]) => (
+                  <input
+                    key={field}
+                    value={addressForm[field]}
+                    onChange={(event) => setAddressForm((previous) => ({ ...previous, [field]: event.target.value }))}
+                    placeholder={placeholder}
+                    required={required}
+                    style={settingsInput}
+                  />
+                ))}
+                <button type="submit" style={settingsButton}>Save Address</button>
+              </form>
+
               <h3
                 style={{
                   margin:

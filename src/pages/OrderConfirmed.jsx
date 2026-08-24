@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useCart } from "../context/CartContext";
 
@@ -200,16 +200,16 @@ export default function OrderConfirmed() {
               cursor: "pointer", fontFamily: "sans-serif" }}>
             Back to Home
           </button>
-          <button onClick={() => navigate("/shop")}
+          <Link to="/shop"
             style={{ flex: 1, padding: "14px",
               backgroundColor: "#8b7355", color: "white",
               border: "none", fontSize: "0.88rem",
-              fontWeight: "600", cursor: "pointer",
+              fontWeight: "600", cursor: "pointer", textAlign: "center",
               fontFamily: "sans-serif" }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6b5a50"}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8b7355"}>
             Continue Shopping
-          </button>
+          </Link>
         </div>
       </div>
     </div>

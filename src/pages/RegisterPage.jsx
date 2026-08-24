@@ -7,7 +7,7 @@ export default function RegisterPage() {
       minHeight: "100vh", backgroundColor: "#eae6e1",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      padding: "60px 20px 80px",
+      padding: "32px 12px 60px", boxSizing: "border-box",
     }}>
       <SignUp
         routing="path"
@@ -21,7 +21,8 @@ export default function RegisterPage() {
             fontFamily:      "Georgia, serif",
           },
           elements: {
-            card:        { boxShadow: "none", border: "1px solid #e8e4df" },
+            rootBox:     { width: "100%", maxWidth: "420px" },
+            card:        { width: "100%", boxShadow: "none", border: "1px solid #e8e4df" },
             headerTitle: { fontFamily: "Georgia, serif" },
           },
         }}
