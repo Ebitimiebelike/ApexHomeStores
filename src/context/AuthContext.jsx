@@ -21,15 +21,18 @@ export function useAuth() {
         : null,
 
     loading: !isLoaded,
-    isLoggedIn: !!isSignedIn,
 
-    // Clerk's getToken() is asynchronous.
-    getToken: () => getToken(),
+    isLoggedIn: Boolean(isSignedIn && user),
+
+    getToken,
 
     logout: () => signOut(),
 
-    // Backward compatibility. Clerk handles authentication.
-    login: async () => ({ success: true }),
+    // Kept for compatibility with older parts of the application.
+    login: async () => ({
+      success: true,
+    }),
+
     register: async () => ({}),
   };
 }
