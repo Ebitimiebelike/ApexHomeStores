@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { formatNaira } from "../Utils/currency";
@@ -203,7 +203,7 @@ const grandTotalNaira = Math.round(totalNaira + deliveryCostNaira);
               cursor: "pointer", fontFamily: "sans-serif" }}>
             Back to Home
           </button>
-          <Link to="/shop"
+          <button onClick={() => navigate("/shop")}
             style={{ flex: 1, padding: "14px",
               backgroundColor: "#8b7355", color: "white",
               border: "none", fontSize: "0.88rem",
@@ -212,7 +212,7 @@ const grandTotalNaira = Math.round(totalNaira + deliveryCostNaira);
             onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6b5a50"}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8b7355"}>
             Continue Shopping
-          </Link>
+          </button>
         </div>
       </div>
     </div>

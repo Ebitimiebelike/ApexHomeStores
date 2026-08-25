@@ -1185,7 +1185,7 @@ export default function CheckoutPage() {
           style={{
             maxWidth: "600px",
             margin: "20px auto 0",
-            padding: "14px 20px",
+            padding: "20px",
             backgroundColor: "#fff1f1",
             color: "#8b0000",
             border:
@@ -1193,9 +1193,46 @@ export default function CheckoutPage() {
             fontFamily:
               "sans-serif",
             fontSize: "0.85rem",
+            borderRadius: "4px",
           }}
         >
-          {orderError}
+          <p style={{ margin: "0 0 14px 0" }}>
+            {orderError}
+          </p>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => setOrderError("")}
+              style={{
+                flex: 1,
+                padding: "10px",
+                backgroundColor: "#8b7355",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "sans-serif",
+                fontSize: "0.85rem",
+                borderRadius: "4px",
+              }}
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => navigate("/shop")}
+              style={{
+                flex: 1,
+                padding: "10px",
+                backgroundColor: "transparent",
+                color: "#8b0000",
+                border: "1px solid #8b0000",
+                cursor: "pointer",
+                fontFamily: "sans-serif",
+                fontSize: "0.85rem",
+                borderRadius: "4px",
+              }}
+            >
+              Back to Shop
+            </button>
+          </div>
         </div>
       )}
 
