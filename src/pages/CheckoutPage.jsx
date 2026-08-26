@@ -772,6 +772,9 @@ export default function CheckoutPage() {
   const [orderError, setOrderError] =
     useState("");
 
+  const [completedOrder, setCompletedOrder] =
+    useState(null);
+
   // ----------------------------------------------------------
   // Responsive
   // ----------------------------------------------------------
@@ -810,6 +813,63 @@ export default function CheckoutPage() {
         "",
     }));
   }, [user]);
+
+  // ----------------------------------------------------------
+  // Leave checkout once the order exists
+  //
+  // Paystack's inline popup writes to window.history itself while it
+  // tears down, which can leave React Router pointing at a route it
+  // never re-rendered. So we navigate from an effect — after the popup
+  // is gone — instead of from inside onSuccess. If the router still
+  // hasn't moved, this component is still mounted when the fallback
+  // fires and we do a full page load instead. A successful navigation
+  // unmounts us, and the cleanup cancels the fallback.
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    if (!completedOrder) return;
+
+    navigate("/order-confirmed", {
+      state: completedOrder,
+      replace: true,
+    });
+
+    const fallback = setTimeout(() => {
+      if (
+        window.location.pathname !==
+        "/order-confirmed"
+      ) {
+        window.location.assign(
+          "/order-confirmed"
+        );
+      }
+    }, 400);
+
+    return () =>
+      clearTimeout(fallback);
+  }, [completedOrder, navigate]);
+
+  // ----------------------------------------------------------
+  // Order placed — on our way out
+  // ----------------------------------------------------------
+
+  if (completedOrder) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#eae6e1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "sans-serif",
+          color: "#5a5550",
+        }}
+      >
+        Payment received — confirming your order...
+      </div>
+    );
+  }
 
   // ----------------------------------------------------------
   // Empty cart
@@ -1082,6 +1142,38 @@ export default function CheckoutPage() {
         );
       }
 
+      const order = {
+        ...formData,
+
+        ref: paystackReference,
+
+        orderNumber:
+          data.order?.orderNumber,
+
+        items: cartItems,
+
+        total: data.order?.total,
+      };
+
+      /*
+       * Cache the order so the confirmation page can still
+       * render it if we end up doing a full page load (the
+       * fallback above) or the customer refreshes — router
+       * state does not survive either.
+       */
+
+      try {
+        sessionStorage.setItem(
+          "apex_last_order",
+          JSON.stringify(order)
+        );
+      } catch (storageError) {
+        console.error(
+          "Could not cache order:",
+          storageError
+        );
+      }
+
       /*
        * IMPORTANT:
        * Only clear the cart AFTER the backend
@@ -1091,25 +1183,7 @@ export default function CheckoutPage() {
 
       clearCart();
 
-      navigate(
-        "/order-confirmed",
-        {
-          state: {
-            ...formData,
-
-            ref:
-              paystackReference,
-
-            orderNumber:
-              data.order?.orderNumber,
-
-            items: cartItems,
-
-            total:
-              data.order?.total,
-          },
-        }
-      );
+      setCompletedOrder(order);
 
       return data;
     } catch (error) {

@@ -1,16 +1,48 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { formatNaira } from "../Utils/currency";
+
+// How long the customer gets to read their order number before we
+// send them back to the shop.
+const REDIRECT_SECONDS = 8;
 
 export default function OrderConfirmed() {
   const location  = useLocation();
   const navigate  = useNavigate();
   const { clearCart } = useCart();
 
-  // Read the order data that was passed from CheckoutPage
-  // location.state holds everything we passed in navigate()
-  const order = location.state;
+  // Read the order data that was passed from CheckoutPage.
+  // location.state holds everything we passed in navigate() — but it is
+  // lost on a refresh or a full page load, so fall back to the copy
+  // CheckoutPage cached before navigating.
+  const [order] = useState(() => {
+    if (location.state) return location.state;
+
+    try {
+      const cached = sessionStorage.getItem("apex_last_order");
+      return cached ? JSON.parse(cached) : null;
+    } catch (error) {
+      console.error("Could not read cached order:", error);
+      return null;
+    }
+  });
+
+  const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
+
+  // React Router can be left out of sync by the Paystack popup's direct
+  // history writes, which is what made these buttons look dead. Navigate
+  // normally, then check the URL actually changed and force a full page
+  // load if it did not.
+  const goTo = useCallback((path) => {
+    navigate(path);
+
+    setTimeout(() => {
+      if (window.location.pathname !== path) {
+        window.location.assign(path);
+      }
+    }, 300);
+  }, [navigate]);
 
   // Clear the cart once the order is confirmed
   // useEffect runs AFTER the page renders — perfect for side effects like this
@@ -18,7 +50,27 @@ export default function OrderConfirmed() {
     if (order) {
       clearCart();
     }
-  }, [order, clearCart]);
+    // clearCart is recreated on every CartProvider render, so keying this
+    // on the order alone keeps it from re-firing in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order]);
+
+  // Count down, then head back to the shop
+  useEffect(() => {
+    if (!order) return;
+
+    const tick = setInterval(() => {
+      setSecondsLeft(current => (current > 0 ? current - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(tick);
+  }, [order]);
+
+  useEffect(() => {
+    if (!order || secondsLeft > 0) return;
+
+    goTo("/shop");
+  }, [order, secondsLeft, goTo]);
 
   // Guard — if someone navigates directly to /order-confirmed with no data
   if (!order) {
@@ -31,7 +83,7 @@ export default function OrderConfirmed() {
         <p style={{ margin: 0, color: "#7a6e68", fontFamily: "sans-serif" }}>
           It looks like you navigated here directly.
         </p>
-        <button onClick={() => navigate("/shop")}
+        <button onClick={() => goTo("/shop")}
           style={{ padding: "13px 36px", backgroundColor: "#8b7355",
             color: "white", border: "none", cursor: "pointer",
             fontFamily: "sans-serif", fontSize: "0.9rem", fontWeight: "600" }}>
@@ -57,7 +109,7 @@ const grandTotalNaira = Math.round(totalNaira + deliveryCostNaira);
         alignItems: "center", borderBottom: "1px solid #e8e4df" }}>
         <div style={{ display: "flex", alignItems: "center",
           gap: "10px", cursor: "pointer" }}
-          onClick={() => navigate("/")}>
+          onClick={() => goTo("/")}>
           <div style={{ width: "38px", height: "38px",
             backgroundColor: "#8b7355", display: "flex",
             alignItems: "center", justifyContent: "center" }}>
@@ -196,14 +248,14 @@ const grandTotalNaira = Math.round(totalNaira + deliveryCostNaira);
 
         {/* CTA buttons */}
         <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => navigate("/")}
+          <button onClick={() => goTo("/")}
             style={{ flex: 1, padding: "14px",
               backgroundColor: "transparent", border: "2px solid #1a1a1a",
               fontSize: "0.88rem", fontWeight: "600",
               cursor: "pointer", fontFamily: "sans-serif" }}>
             Back to Home
           </button>
-          <button onClick={() => navigate("/shop")}
+          <button onClick={() => goTo("/shop")}
             style={{ flex: 1, padding: "14px",
               backgroundColor: "#8b7355", color: "white",
               border: "none", fontSize: "0.88rem",
@@ -214,6 +266,15 @@ const grandTotalNaira = Math.round(totalNaira + deliveryCostNaira);
             Continue Shopping
           </button>
         </div>
+
+        {/* Auto-redirect notice */}
+        <p style={{ margin: "16px 0 0", textAlign: "center",
+          fontSize: "0.82rem", color: "#7a6e68",
+          fontFamily: "sans-serif" }}>
+          {secondsLeft > 0
+            ? `Taking you back to the shop in ${secondsLeft} second${secondsLeft === 1 ? "" : "s"}...`
+            : "Taking you back to the shop..."}
+        </p>
       </div>
     </div>
   );
