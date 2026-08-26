@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { formatNaira } from "../Utils/currency";
 import Footer from "../components/Footer";
+import ReturnOrderModal from "../components/ReturnOrderModal";
 
 const API = `${(
   import.meta.env.VITE_API_URL ||
@@ -46,6 +47,7 @@ export default function OrderTrackingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -167,12 +169,31 @@ export default function OrderTrackingPage() {
                   <span>{order.items?.length || 0} item{order.items?.length === 1 ? "" : "s"}</span>
                   <strong>{formatNaira(Number(order.total) || 0)}</strong>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setOrderToDelete(order)}
+                  style={styles.deleteButton}
+                >
+                  Delete Order
+                </button>
               </article>
             );
           })}
         </div>
       </main>
       <Footer />
+
+      {orderToDelete && (
+        <ReturnOrderModal
+          order={orderToDelete}
+          onClose={() => setOrderToDelete(null)}
+          onDeleted={(deletedId) => {
+            setOrders((previous) => previous.filter((order) => order._id !== deletedId));
+            setOrderToDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -203,4 +224,5 @@ const styles = {
   countdown: { fontSize: "1.25rem", fontFamily: "Georgia, serif" },
   alignRight: { textAlign: "right" },
   summary: { borderTop: "1px solid #eee9e3", marginTop: "22px", paddingTop: "16px", display: "flex", justifyContent: "space-between", color: "#625951" },
+  deleteButton: { marginTop: "16px", padding: "10px 18px", backgroundColor: "transparent", border: "2px solid #8b0000", color: "#8b0000", fontFamily: "sans-serif", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" },
 };

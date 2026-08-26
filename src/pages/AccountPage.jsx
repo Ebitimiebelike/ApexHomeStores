@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatNaira } from "../Utils/currency";
 
 import Footer from "../components/Footer";
+import ReturnOrderModal from "../components/ReturnOrderModal";
 
 const API = `${(
   import.meta.env.VITE_API_URL ||
@@ -61,6 +62,9 @@ export default function AccountPage() {
     useState("");
 
   const [expandedOrder, setExpandedOrder] =
+    useState(null);
+
+  const [orderToDelete, setOrderToDelete] =
     useState(null);
 
   const [savedAddresses, setSavedAddresses] =
@@ -1149,6 +1153,26 @@ export default function AccountPage() {
                                   </div>
                                 )}
                               </div>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOrderToDelete(order)
+                                }
+                                style={{
+                                  marginTop: "20px",
+                                  padding: "10px 18px",
+                                  backgroundColor: "transparent",
+                                  border: "2px solid #8b0000",
+                                  color: "#8b0000",
+                                  fontFamily: "sans-serif",
+                                  fontSize: "0.82rem",
+                                  fontWeight: "600",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Delete Order
+                              </button>
                             </div>
                           )}
                         </div>
@@ -1414,6 +1438,22 @@ export default function AccountPage() {
       </div>
 
       <Footer />
+
+      {orderToDelete && (
+        <ReturnOrderModal
+          order={orderToDelete}
+          onClose={() => setOrderToDelete(null)}
+          onDeleted={(deletedId) => {
+            setOrders((previous) =>
+              previous.filter((order) => order._id !== deletedId)
+            );
+            setExpandedOrder((current) =>
+              current === deletedId ? null : current
+            );
+            setOrderToDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 }
